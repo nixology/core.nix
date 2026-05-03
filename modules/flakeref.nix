@@ -1,1 +1,1 @@
-{ flakeref = "github:nixology/core"; }
+{ flakeref = "github:nixology/core.nix"; }

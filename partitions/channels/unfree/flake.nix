@@ -7,6 +7,6 @@
   inputs = {
     nixpkgs.url = "github:numtide/nixpkgs-unfree/nixpkgs-unstable";
     nixpkgs.inputs.nixpkgs.follows = "nixpkgs-unstable/nixpkgs";
-    nixpkgs-unstable.url = "github:nixology/core?dir=partitions/channels/unstable";
+    nixpkgs-unstable.url = "github:nixology/core.nix?dir=partitions/channels/unstable";
   };
 }

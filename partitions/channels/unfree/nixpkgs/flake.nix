@@ -2,7 +2,7 @@
   description = "nixpkgs with the unfree bits enabled";
 
   inputs.nixpkgs.follows = "unstable/nixpkgs";
-  inputs.unstable.url = "github:nixology/core?dir=partitions/channels/unstable";
+  inputs.unstable.url = "github:nixology/core.nix?dir=partitions/channels/unstable";
 
   outputs =
     { nixpkgs, ... }:
