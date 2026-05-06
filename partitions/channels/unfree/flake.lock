@@ -8,11 +8,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1777042109,
-        "narHash": "sha256-yNcgFMBo0WdKBibP3stF6I2/FrassBc9N72cmKb1jLg=",
+        "lastModified": 1777906656,
+        "narHash": "sha256-PqRntCRfhNQClDDaCesWYS8crRsDXRc/KQknCgznGnc=",
         "owner": "numtide",
         "repo": "nixpkgs-unfree",
-        "rev": "9840465a99c5732c133b50263276d37fac660b59",
+        "rev": "0be363e30865c9835011e9d5f71c24838f7add89",
         "type": "github"
       },
       "original": {
