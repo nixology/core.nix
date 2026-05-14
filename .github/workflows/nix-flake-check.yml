@@ -24,7 +24,7 @@ jobs:
           persist-credentials: false
 
       - name: Install Nix
-        uses: DeterminateSystems/determinate-nix-action@92ffb5400c3776307a27a1727d7e2ac3dcd9f844 # v3
+        uses: DeterminateSystems/determinate-nix-action@bafaa638b9d5ec0e7e3ac1a7fc80453ef1fd265f # v3
 
       - name: Enable Magic Nix Cache
         uses: DeterminateSystems/magic-nix-cache-action@5626df0a8b8f16cb060538f6d3041500a2d10cb0 # main
