@@ -1,0 +1,58 @@
+name: Update flake lock for channels
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * 0' # runs weekly on Sunday at 00:00
+
+permissions: {}
+
+jobs:
+  update-flake-lock:
+    name: Update flake lock
+    strategy:
+      matrix:
+        lock-file-dir: [
+          "partitions/channels/nixos",
+          "partitions/channels/nixos-small",
+          "partitions/channels/nixos-unstable",
+          "partitions/channels/nixos-unstable-small",
+          "partitions/channels/nixpkgs-darwin",
+          "partitions/channels/nixpkgs-unstable"
+        ]
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      id-token: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+
+      - name: Install Nix
+        uses: DeterminateSystems/determinate-nix-action@92ffb5400c3776307a27a1727d7e2ac3dcd9f844 # v3
+
+      - name: Update flake lock
+        uses: DeterminateSystems/update-flake-lock@main # main
+        id: update-flake-lock
+        with:
+          commit-msg: "chore(${{ matrix.lock-file-dir }}): update flake.lock"
+          pr-title: "Update ${{ matrix.lock-file-dir }}/flake.lock"
+          pr-body: |
+            Automated changes by the [update-flake-lock](https://github.com/DeterminateSystems/update-flake-lock) GitHub Action.
+
+            ```
+            {{ env.GIT_COMMIT_MESSAGE }}
+            ```
+          pr-labels: |
+            dependencies
+            automated
+          path-to-flake-dir: '${{ matrix.lock-file-dir }}'
+          branch: "update_flake_lock_${{ matrix.lock-file-dir }}"
+      - run: "gh pr merge --auto --rebase --delete-branch ${{ steps.update-flake-lock.outputs.pull-request-number }}"
+        env:
+          GH_TOKEN: ${{ github.token }}
