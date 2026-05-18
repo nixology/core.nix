@@ -13,9 +13,9 @@ let
       nixology.core.moduleWithSystem
       nixology.core.perSystem
       nixology.core.pkgs
-      nixology.core.systems
       nixology.core.transposition
       nixology.core.withSystem
+      nixology.systems.default
     ];
     meta = {
       shortDescription = "default module for nixology";

@@ -1,48 +1,47 @@
-{
-  config,
-  inputs,
-  lib,
-  ...
-}:
+{ config, lib, ... }:
 let
-  systems = config.partitions.systems.extraInputs.default;
+  variants = [
+    "default"
+    "default-darwin"
+    "default-linux"
+    "aarch64-darwin"
+    "aarch64-linux"
+    "x86_64-darwin"
+    "x86_64-linux"
+  ];
 
-  module = {
-    systems = lib.mkDefault (import systems);
-  };
+  inputs = config.partitions.systems.extraInputs;
 
-  component = {
-    inherit module;
-    dependencies = with inputs.self.components; [ nixology.core.perSystem ];
-    meta = {
-      shortDescription = "default systems";
-    };
-  };
-
-  checks =
-    { config, ... }:
+  systems = map (
+    variant:
+    let
+      module = {
+        systems =
+          if variant == "default" then
+            lib.mkOptionDefault (import inputs."${variant}")
+          else
+            # n.b. don't want merge semantics here; exclusively want specific systems variant, so mkForce
+            lib.mkForce (import inputs."${variant}");
+      };
+    in
     {
-      perSystem =
-        { pkgs, ... }:
-        let
-          eval = config.flake.lib.evalComponent { inherit inputs; } (
-            with inputs.self.components; nixology.core.systems
-          );
-        in
-        {
-          checks.core-systems = pkgs.runCommandLocal "core-systems-check" { } ''
-            : ${builtins.seq eval.config "ok"}
-            touch $out
-          '';
+      inherit variant;
+      component = {
+        inherit module;
+        meta = {
+          shortDescription = "flake systems";
         };
-    };
+      };
+    }
+  ) variants;
 in
 {
-  imports = [
-    checks
-    module
-  ];
-  flake.components = {
-    nixology.core.systems = component;
-  };
+  imports = map (x: x.component.module) (builtins.filter (x: x.variant == "default") systems);
 }
+// (builtins.foldl' lib.recursiveUpdate { } (
+  map (systems': {
+    flake.components = {
+      nixology.systems.${systems'.variant} = systems'.component;
+    };
+  }) systems
+))

@@ -9,17 +9,17 @@ let
     "nixpkgs-unstable"
   ];
 
-  channels =
+  branches =
     let
-      partition = "channels";
+      partition = "branches";
     in
     map (variant: {
       partitions."${partition}-${variant}".extraInputsFlake = ../partitions/${partition}/${variant};
     }) variants;
 
-  pkgs =
+  channels =
     let
-      partition = "pkgs";
+      partition = "channels";
     in
     map (variant: {
       partitions."${partition}-${variant}".extraInputsFlake = ../partitions/${partition}/${variant};
@@ -46,8 +46,8 @@ let
       schemas
       systems
     ]
-    ++ channels
-    ++ pkgs;
+    ++ branches
+    ++ channels;
   };
 in
 module

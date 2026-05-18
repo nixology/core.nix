@@ -9,16 +9,16 @@ let
     "nixpkgs-unstable"
   ];
 
-  pkgs = map (
+  branches = map (
     variant:
     let
-      pkgs = config.partitions."pkgs-${variant}".extraInputs;
+      branches = config.partitions."branches-${variant}".extraInputs;
 
       module = {
         perSystem =
           { system, ... }:
           {
-            _module.args.pkgs = builtins.seq pkgs.nixpkgs pkgs.nixpkgs.legacyPackages.${system};
+            _module.args.pkgs = builtins.seq branches.nixpkgs branches.nixpkgs.legacyPackages.${system};
           };
       };
     in
@@ -27,7 +27,7 @@ let
       component = {
         inherit module;
         meta = {
-          description = "Provides access to standard packages by using ${variant} pkgs as the package source, making it available as the pkgs argument across all perSystem configurations";
+          description = "Provides access to standard packages by using ${variant} branches as the package source, making it available as the pkgs argument across all perSystem configurations";
           shortDescription = "package set fetched from git repository";
         };
       };
@@ -35,9 +35,9 @@ let
   ) variants;
 in
 builtins.foldl' lib.recursiveUpdate { } (
-  map (pkgs': {
+  map (branches': {
     flake.components = {
-      nixology.pkgs.${pkgs'.variant} = pkgs'.component;
+      nixology.branches.${branches'.variant} = branches'.component;
     };
-  }) pkgs
+  }) branches
 )
