@@ -2,6 +2,7 @@ name: Nix flake check
 
 on:
   pull_request_target:
+    types: [opened, synchronize, reopened]
   push:
     branches: [main]
   workflow_dispatch:

@@ -42,7 +42,7 @@ jobs:
         uses: DeterminateSystems/determinate-nix-action@bafaa638b9d5ec0e7e3ac1a7fc80453ef1fd265f # v3
 
       - name: Update flake lock
-        uses: DeterminateSystems/update-flake-lock@main # main
+        uses: DeterminateSystems/update-flake-lock@5ba4a20ae344a5edd7b97ed3002219974f4d20d7 # main
         id: update-flake-lock
         with:
           commit-msg: "chore(${{ matrix.lock-file-dir }}): update flake.lock"
@@ -60,7 +60,7 @@ jobs:
           branch: "update_flake_lock_${{ strategy.job-index }}"
       - name: Enable auto-merge
         if: steps.update-flake-lock.outputs.pull-request-number != ''
+        run: gh pr merge --auto --rebase --delete-branch "$PR_NUMBER"
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ steps.update-flake-lock.outputs.pull-request-number }}
-        run: gh pr merge --auto --rebase --delete-branch "$PR_NUMBER"
