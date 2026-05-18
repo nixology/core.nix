@@ -54,13 +54,12 @@ Core integration with `flake-parts`, including:
 
 Package-set components sourced from channel tarballs:
 
-- `darwin`
 - `nixos`
 - `nixos-small`
 - `nixos-unstable`
 - `nixos-unstable-small`
-- `unfree`
-- `unstable`
+- `nixpkgs-darwin`
+- `nixpkgs-unstable`
 
 ### `nixology.pkgs`
 

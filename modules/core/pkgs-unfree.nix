@@ -10,9 +10,14 @@ let
   module = {
     # default pkgs
     perSystem =
-      { system, ... }:
+      { config, system, ... }:
       {
-        _module.args.pkgs = lib.mkDefault (builtins.seq nixpkgs nixpkgs.legacyPackages.${system});
+        _module.args.pkgs = import nixpkgs {
+          inherit system;
+          config = {
+            allowUnfree = true;
+          };
+        };
       };
   };
 
@@ -31,11 +36,11 @@ let
         { pkgs, ... }:
         let
           eval = config.flake.lib.evalComponent { inherit inputs; } (
-            with inputs.self.components; nixology.core.pkgs
+            with inputs.self.components; nixology.core.pkgs-unfree
           );
         in
         {
-          checks.core-pkgs = pkgs.runCommandLocal "core-pkgs-check" { } ''
+          checks.core-pkgs-unfree = pkgs.runCommandLocal "core-pkgs-unfree-check" { } ''
             : ${builtins.seq eval.config "ok"}
             touch $out
           '';
@@ -45,9 +50,8 @@ in
 {
   imports = [
     checks
-    module
   ];
   flake.components = {
-    nixology.core.pkgs = component;
+    nixology.core.pkgs-unfree = component;
   };
 }

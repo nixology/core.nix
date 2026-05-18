@@ -1,13 +1,12 @@
 { inputs, ... }:
 let
   variants = [
-    "darwin"
     "nixos"
     "nixos-small"
     "nixos-unstable"
     "nixos-unstable-small"
-    "unfree"
-    "unstable"
+    "nixpkgs-darwin"
+    "nixpkgs-unstable"
   ];
 
   channels =
