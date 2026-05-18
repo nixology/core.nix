@@ -1,31 +1,19 @@
 {
-  config,
   inputs,
-  lib,
   ...
 }:
 let
-  nixpkgs = config.partitions.channels-nixpkgs-unstable.extraInputs.nixpkgs;
-
   module = {
-    # default pkgs
-    perSystem =
-      { config, system, ... }:
-      {
-        _module.args.pkgs = import nixpkgs {
-          inherit system;
-          config = {
-            allowUnfree = true;
-          };
-        };
-      };
+    pkgs.settings.allowUnfree = true;
   };
 
   component = {
     inherit module;
-    dependencies = with inputs.self.components; [ nixology.core.perSystem ];
+    dependencies = with inputs.self.components; [
+      nixology.core.pkgs
+    ];
     meta = {
-      shortDescription = "default pkgs";
+      shortDescription = "enables unfree packages in `pkgs`";
     };
   };
 
