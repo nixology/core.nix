@@ -17,14 +17,13 @@ jobs:
 
     strategy:
       matrix:
-        channel: [
-          "nixos",
-          "nixos-small",
-          "nixos-unstable",
-          "nixos-unstable-small",
-          "nixpkgs-darwin",
-          "nixpkgs-unstable"
-        ]
+        channel:
+          - nixos
+          - nixos-small
+          - nixos-unstable
+          - nixos-unstable-small
+          - nixpkgs-darwin
+          - nixpkgs-unstable
 
     runs-on: ubuntu-latest
 
@@ -58,9 +57,11 @@ jobs:
 
             <details>
             <summary>Lockfile changes</summary>
+
             ```
             {{ env.GIT_COMMIT_MESSAGE }}
             ```
+
             </details>
 
             ## Automation
@@ -76,8 +77,8 @@ jobs:
           pr-labels: |
             dependencies
             automated
-          path-to-flake-dir: 'partitions/channels/${{ matrix.channel }}'
-          branch: "update-${{ matrix.channel }}-channel-${{ strategy.job-index }}"
+          path-to-flake-dir: "partitions/channels/${{ matrix.channel }}"
+          branch: "update-${{ matrix.channel }}-channel"
 
       - name: Enable PR auto-merge
         if: steps.update-flake-lock.outputs.pull-request-number != ''
