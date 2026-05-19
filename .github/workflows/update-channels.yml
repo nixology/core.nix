@@ -40,10 +40,18 @@ jobs:
       - name: Install Nix
         uses: DeterminateSystems/determinate-nix-action@bafaa638b9d5ec0e7e3ac1a7fc80453ef1fd265f # v3
 
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.NIXOLOGY_AUTOMATION_GH_APP_ID }}
+          private-key: ${{ secrets.NIXOLOGY_AUTOMATION_GH_APP_PRIVATE_KEY }}
+
       - name: Update flake lock
         id: update-flake-lock
         uses: DeterminateSystems/update-flake-lock@5ba4a20ae344a5edd7b97ed3002219974f4d20d7 # main
         with:
+          branch: "update-${{ matrix.channel }}-channel"
           commit-msg: "chore(channels): update partitions/channels/${{ matrix.channel }}/flake.lock"
           pr-title: "chore(channels): update ${{ matrix.channel }} channel"
           pr-body: |
@@ -78,7 +86,7 @@ jobs:
             dependencies
             automated
           path-to-flake-dir: "partitions/channels/${{ matrix.channel }}"
-          branch: "update-${{ matrix.channel }}-channel"
+          token: ${{ steps.app-token.outputs.token }}
 
       - name: Enable PR auto-merge
         if: steps.update-flake-lock.outputs.pull-request-number != ''
