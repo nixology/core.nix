@@ -1,4 +1,4 @@
-# nixology/core
+# nixology/core.nix
 
 Reusable components for composing Nix flakes.
 
@@ -9,7 +9,7 @@ This repository exports:
 | `lib` | Helper functions such as `mkFlake`, `evalFlakeModule`, `evalComponent`, `mkTOMLFlake`, and `modulesIn` |
 | `components.nixology.core.*` | Core componets like `default`, `flake`, `perSystem`, `withSystem`, `systems`, `pkgs`, and `partitions` |
 | `components.nixology.channels.*` | `pkgs` providers backed by Nix channel tarballs |
-| `components.nixology.pkgs.*` | `pkgs` providers backed by `github:nixos/nixpkgs` refs |
+| `components.nixology.branches.*` | `pkgs` providers backed by `github:nixos/nixpkgs` refs |
 | `components.nixology.systems.*` | Predefined system sets such as `default`, `default-linux`, `aarch64-linux`, and `x86_64-darwin` |
 | `schemas` | Flake schemas for `lib`, `components`, and `checks` |
 | `checks` | Evaluation checks for the exported components |
@@ -35,13 +35,13 @@ Each component carries metadata, a module, and optional dependencies. The resolv
 }
 ```
 
-## Component families
+## Components
 
 ### `nixology.core`
 
 Core integration with `flake-parts`, including:
 
-- `default`: standard `flake-parts` module stack
+- `default`: base components for Nixology flakes
 - `flake`, `perSystem`, `withSystem`, `moduleWithSystem`, `transposition`: `flake-parts` integration points
 - `pkgs`: default package set
 - `systems`: default system set
@@ -61,7 +61,7 @@ Package-set components sourced from channel tarballs:
 - `nixpkgs-darwin`
 - `nixpkgs-unstable`
 
-### `nixology.pkgs`
+### `nixology.branches`
 
 Package-set components sourced from `github:nixos/nixpkgs` refs, with the same variants as `nixology.channels`.
 
@@ -82,12 +82,10 @@ Prebuilt system lists:
 ```text
 modules/     Root modules assembled into the exported flake
 modules/core Core component implementations and library helpers
-partitions/  Input-only flakes used for systems, schemas, channels, and pkgs variants
+partitions/  Input-only flakes used for branches, channels, schemas, and systems
 justfile     Project maintenance commands
 ```
 
 ## Development
 
-- Show exported outputs: `nix flake show --all-systems`
-- Run checks: `nix flake check`
 - Refresh nested flake inputs: `just update`
