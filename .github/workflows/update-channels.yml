@@ -9,7 +9,7 @@ permissions: {}
 
 jobs:
   update-channel:
-    name: Update (${{ matrix.channel }}) channel
+    name: Update ${{ matrix.channel }} channel
 
     concurrency:
       group: update-${{ matrix.channel }}-channel
