@@ -7,7 +7,7 @@ This repository exports:
 | Output | Purpose |
 | --- | --- |
 | `lib` | Helper functions such as `mkFlake`, `evalFlakeModule`, `evalComponent`, `mkTOMLFlake`, and `modulesIn` |
-| `components.nixology.core.*` | Core componets like `default`, `flake`, `perSystem`, `withSystem`, `systems`, `pkgs`, and `partitions` |
+| `components.nixology.core.*` | Core components like `default`, `flake`, `perSystem`, `withSystem`, `systems`, `pkgs`, and `partitions` |
 | `components.nixology.channels.*` | `pkgs` providers backed by Nix channel tarballs |
 | `components.nixology.branches.*` | `pkgs` providers backed by `github:nixos/nixpkgs` refs |
 | `components.nixology.systems.*` | Predefined system sets such as `default`, `default-linux`, `aarch64-linux`, and `x86_64-darwin` |

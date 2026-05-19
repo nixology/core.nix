@@ -12,13 +12,13 @@ let
   branches = map (
     variant:
     let
-      branches = config.partitions."branches-${variant}".extraInputs;
+      branchInputs = config.partitions."branches-${variant}".extraInputs;
 
       module = {
         perSystem =
           { system, ... }:
           {
-            _module.args.pkgs = builtins.seq branches.nixpkgs branches.nixpkgs.legacyPackages.${system};
+            _module.args.pkgs = builtins.seq branchInputs.nixpkgs branchInputs.nixpkgs.legacyPackages.${system};
           };
       };
     in

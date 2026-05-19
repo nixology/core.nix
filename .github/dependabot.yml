@@ -10,7 +10,7 @@ updates:
   - package-ecosystem: nix
     directories:
       - /
-      - /partitions/**/**/**/*
+      - /partitions/**/*
     schedule:
       interval: daily
     cooldown:
