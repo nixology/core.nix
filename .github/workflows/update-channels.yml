@@ -1,23 +1,23 @@
-name: Update flake lock for channels
+name: Update channels
 
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 0 * * *' # runs daily at 00:00
+    - cron: '33 3 * * *' # runs daily at 03:33
 
 permissions: {}
 
 jobs:
-  update-flake-lock:
-    name: Update flake lock
+  update-channel:
+    name: Update (${{ matrix.flake-directory }})
 
     concurrency:
-      group: update-flake-lock-${{ matrix.lock-file-dir }}
+      group: update-channel-${{ matrix.flake-directory }}
       cancel-in-progress: false
 
     strategy:
       matrix:
-        lock-file-dir: [
+        flake-directory: [
           "partitions/channels/nixos",
           "partitions/channels/nixos-small",
           "partitions/channels/nixos-unstable",
@@ -25,11 +25,11 @@ jobs:
           "partitions/channels/nixpkgs-darwin",
           "partitions/channels/nixpkgs-unstable"
         ]
+
     runs-on: ubuntu-latest
 
     permissions:
       contents: write
-      issues: write
       pull-requests: write
 
     steps:
@@ -42,11 +42,11 @@ jobs:
         uses: DeterminateSystems/determinate-nix-action@bafaa638b9d5ec0e7e3ac1a7fc80453ef1fd265f # v3
 
       - name: Update flake lock
-        uses: DeterminateSystems/update-flake-lock@5ba4a20ae344a5edd7b97ed3002219974f4d20d7 # main
         id: update-flake-lock
+        uses: DeterminateSystems/update-flake-lock@5ba4a20ae344a5edd7b97ed3002219974f4d20d7 # main
         with:
-          commit-msg: "chore(${{ matrix.lock-file-dir }}): update flake.lock"
-          pr-title: "Update ${{ matrix.lock-file-dir }}/flake.lock"
+          commit-msg: "chore(${{ matrix.flake-directory }}): update flake.lock"
+          pr-title: "Update ${{ matrix.flake-directory }}/flake.lock"
           pr-body: |
             Automated changes by the [update-flake-lock](https://github.com/DeterminateSystems/update-flake-lock) GitHub Action.
 
@@ -56,9 +56,10 @@ jobs:
           pr-labels: |
             dependencies
             automated
-          path-to-flake-dir: '${{ matrix.lock-file-dir }}'
+          path-to-flake-dir: '${{ matrix.flake-directory }}'
           branch: "update_flake_lock_${{ strategy.job-index }}"
-      - name: Enable auto-merge
+
+      - name: Enable PR auto-merge
         if: steps.update-flake-lock.outputs.pull-request-number != ''
         run: gh pr merge --auto --rebase --delete-branch "$PR_NUMBER"
         env:

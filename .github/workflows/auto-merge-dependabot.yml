@@ -1,0 +1,31 @@
+name: Auto-merge Dependabot updates
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize]
+
+permissions: {}
+
+jobs:
+  dependabot:
+    if: >
+      github.event.pull_request.user.login == 'dependabot[bot]' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Fetch dependabot metadata
+        id: fetch-dependabot-metadata
+        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3
+
+      - name: Enable auto-merge for Nix flake updates
+        if: ${{steps.fetch-dependabot-metadata.outputs.package-ecosystem == 'nix'}}
+        run: gh pr merge --auto --rebase --delete-branch "$PR_NUMBER"
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}

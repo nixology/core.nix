@@ -1,7 +1,7 @@
-name: Nix flake check
+name: Check Nix flake
 
 on:
-  pull_request_target:
+  pull_request:
     types: [opened, synchronize, reopened]
   push:
     branches: [main]
@@ -11,7 +11,8 @@ permissions: {}
 
 jobs:
   nix-flake-check:
-    name: Nix Flake Check
+    name: Run Nix flake check
+
     runs-on: ubuntu-latest
 
     permissions:
@@ -30,5 +31,5 @@ jobs:
       - name: Enable Magic Nix Cache
         uses: DeterminateSystems/magic-nix-cache-action@908b263ff629f4cc17666315b7fd3ec127c6244d # main
 
-      - name: Run nix flake check
+      - name: Check flake
         run: nix flake check
