@@ -12,13 +12,13 @@ let
   channels = map (
     variant:
     let
-      channel = config.partitions."channels-${variant}".extraInputs;
+      channelInputs = config.partitions."channels-${variant}".extraInputs;
 
       module = {
         perSystem =
           { system, ... }:
           {
-            _module.args.pkgs = builtins.seq channel.nixpkgs channel.nixpkgs.legacyPackages.${system};
+            _module.args.pkgs = builtins.seq channelInputs.nixpkgs channelInputs.nixpkgs.legacyPackages.${system};
           };
       };
     in
@@ -27,17 +27,17 @@ let
       component = {
         inherit module;
         meta = {
-          description = "Provides access to standard packages by using ${variant} channel as the package source, making it available as the pkgs argument across all perSystem configurations";
-          shortDescription = "package set fetched from channel tarball";
+          description = "Provides access to packages from nixpkgs by using ${variant} channel branch as the package source, making it available as the pkgs argument across all perSystem configurations";
+          shortDescription = "package set from ${variant} channel branch";
         };
       };
     }
   ) variants;
 in
 builtins.foldl' lib.recursiveUpdate { } (
-  map (channel: {
+  map (channels': {
     flake.components = {
-      nixology.channels.${channel.variant} = channel.component;
+      nixology.channels.${channels'.variant} = channels'.component;
     };
   }) channels
 )

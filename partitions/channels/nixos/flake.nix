@@ -1,10 +1,10 @@
 {
-  description = "A flake for nixos nixpkgs from channels";
+  description = "A flake with nixpkgs from nixos channel";
 
   # this flake is only used for its inputs
   outputs = { ... }: { };
 
   inputs = {
-    nixpkgs.url = "https://channels.nixos.org/nixos-25.11/nixexprs.tar.xz";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-25.11";
   };
 }

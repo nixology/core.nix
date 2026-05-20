@@ -1,10 +1,10 @@
 {
-  description = "A flake for unstable nixos nixpkgs from channels";
+  description = "A flake with nixpkgs from unstable nixos channel";
 
   # this flake is only used for its inputs
   outputs = { ... }: { };
 
   inputs = {
-    nixpkgs.url = "https://channels.nixos.org/nixos-unstable/nixexprs.tar.xz";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
   };
 }

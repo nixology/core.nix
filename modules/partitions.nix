@@ -9,14 +9,6 @@ let
     "nixpkgs-unstable"
   ];
 
-  branches =
-    let
-      partition = "branches";
-    in
-    map (variant: {
-      partitions."${partition}-${variant}".extraInputsFlake = ../partitions/${partition}/${variant};
-    }) variants;
-
   channels =
     let
       partition = "channels";
@@ -46,7 +38,6 @@ let
       schemas
       systems
     ]
-    ++ branches
     ++ channels;
   };
 in

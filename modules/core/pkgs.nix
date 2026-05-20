@@ -182,7 +182,7 @@ let
     inherit module;
     dependencies = with inputs.self.components; [ nixology.core.perSystem ];
     meta = {
-      shortDescription = "the `pkgs` perSystem module argument";
+      shortDescription = "pkgs from nipxkgs unstable channel";
     };
   };
 
