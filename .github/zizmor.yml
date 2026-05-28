@@ -2,4 +2,4 @@ rules:
   dangerous-triggers:
     # Only used for Dependabot PR auto-merge; guarded by actor checks and no untrusted code execution
     ignore:
-      - "dependabot-auto-merge.yml"
+      - "auto-merge-dependabot.yml"
