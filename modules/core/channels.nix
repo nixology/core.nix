@@ -18,7 +18,9 @@ let
         perSystem =
           { system, ... }:
           {
-            _module.args.pkgs = builtins.seq channelInputs.nixpkgs channelInputs.nixpkgs.legacyPackages.${system};
+            _module.args.pkgs =
+              builtins.seq channelInputs.nixpkgs
+                channelInputs.nixpkgs.legacyPackages.${system};
           };
       };
     in
