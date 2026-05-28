@@ -98,11 +98,11 @@ let
         let
           lock = builtins.fromJSON (builtins.readFile "${self.outPath}/flake.lock");
 
-          getNode = name: builtins.getAttr name lock.nodes;
+          getNode = input: builtins.getAttr (pname input) lock.nodes;
 
-          getLockedNode = name: (getNode name).locked;
+          getLockedNode = input: (getNode input).locked;
 
-          getOriginalNode = name: (getNode name).original;
+          getOriginalNode = input: (getNode input).original;
 
           pname =
             input:
@@ -110,23 +110,36 @@ let
               builtins.filter (name: self.inputs.${name} == input) (builtins.attrNames self.inputs)
             );
 
+          ref = input: (getOriginalNode input).ref;
+
+          rev = input: (getLockedNode input).rev;
+
+          src = input: input;
+
+          url = input: (getLockedNode input).url;
+
           version =
             input:
             let
-              ref = (getOriginalNode (pname input)).ref;
+              ref' = ref input;
             in
-            if builtins.substring 0 1 ref == "v" then
-              builtins.substring 1 ((builtins.stringLength ref) - 1) ref
+            if builtins.substring 0 1 ref' == "v" then
+              builtins.substring 1 ((builtins.stringLength ref') - 1) ref'
             else
-              ref;
+              ref';
+
+          metadataForInput = input: {
+            pname = pname input;
+            ref = ref input;
+            rev = rev input;
+            src = src input;
+            url = url input;
+            version = version input;
+          };
         in
         {
           inherit
-            getNode
-            getLockedNode
-            getOriginalNode
-            pname
-            version
+            metadataForInput
             ;
         };
 
