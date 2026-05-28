@@ -92,11 +92,50 @@ let
               [ ];
         in
         moduleFiles;
+
+      forFlake =
+        self:
+        let
+          lock = builtins.fromJSON (builtins.readFile "${self.outPath}/flake.lock");
+
+          getNode = name: builtins.getAttr name lock.nodes;
+
+          getLockedNode = name: (getNode name).locked;
+
+          getOriginalNode = name: (getNode name).original;
+
+          pname =
+            input:
+            builtins.head (
+              builtins.filter (name: self.inputs.${name} == input) (builtins.attrNames self.inputs)
+            );
+
+          version =
+            input:
+            let
+              ref = (getOriginalNode (pname input)).ref;
+            in
+            if builtins.substring 0 1 ref == "v" then
+              builtins.substring 1 ((builtins.stringLength ref) - 1) ref
+            else
+              ref;
+        in
+        {
+          inherit
+            getNode
+            getLockedNode
+            getOriginalNode
+            pname
+            version
+            ;
+        };
+
     in
     {
       inherit
         evalComponent
         evalFlakeModule
+        forFlake
         mkFlake
         mkTOMLFlake
         modulesIn
@@ -120,10 +159,12 @@ let
       );
   };
 
-  module = {
-    flake.lib = lib.mkDefault library;
-    flake.schemas.lib = schema;
-  };
+  module =
+    { inputs, ... }:
+    {
+      flake.lib = lib.mkDefault library;
+      flake.schemas.lib = schema;
+    };
 
   component = {
     inherit module;
