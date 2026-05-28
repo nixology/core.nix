@@ -5,14 +5,20 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "path": "partitions/channels/nixpkgs-unstable",
-        "type": "path"
+        "dir": "partitions/channels/nixpkgs-unstable",
+        "lastModified": 1779989421,
+        "narHash": "sha256-lJksr9k1XjnFAEV7bRFEl4f6ELEX7WqooEi/1e2h2YY=",
+        "owner": "nixology",
+        "repo": "core.nix",
+        "rev": "5cf4ab37e0947cb562ada8342185247220d21d01",
+        "type": "github"
       },
       "original": {
-        "path": "partitions/channels/nixpkgs-unstable",
-        "type": "path"
-      },
-      "parent": []
+        "dir": "partitions/channels/nixpkgs-unstable",
+        "owner": "nixology",
+        "repo": "core.nix",
+        "type": "github"
+      }
     },
     "flake-parts": {
       "inputs": {
