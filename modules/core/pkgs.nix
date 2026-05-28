@@ -21,7 +21,7 @@ let
               options = {
                 nixpkgs = mkOption {
                   type = path;
-                  default = cfg.partitions.channels-nixpkgs-unstable.extraInputs.nixpkgs;
+                  default = inputs.nixpkgs;
                   description = "The nixpkgs expression to use for pkgs.";
                 };
                 settings = mkOption {
