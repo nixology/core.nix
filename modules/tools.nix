@@ -16,9 +16,10 @@ let
           formatter = pkgs.writeShellApplication {
             name = "formatter";
             runtimeInputs = [
-              pkgs.treefmt
-              pkgs.nixfmt
               pkgs.deadnix
+              pkgs.just
+              pkgs.nixfmt
+              pkgs.treefmt
               pkgs.yamlfmt
               pkgs.zizmor
             ];
@@ -33,12 +34,22 @@ let
               EOF
 
               cat > "$TMPDIR/treefmt.toml" <<EOF
-              [formatter.nixfmt]
-              command = "nixfmt"
-              includes = ["**/*.nix"]
-
               [formatter.deadnix]
               command = "deadnix"
+              includes = ["**/*.nix"]
+
+              [formatter.just]
+              command = "just"
+              options = ["--fmt", "--unstable", "--justfile"]
+              includes = [
+                "justfile",
+                "Justfile",
+                "**/justfile",
+                "**/Justfile",
+              ]
+
+              [formatter.nixfmt]
+              command = "nixfmt"
               includes = ["**/*.nix"]
 
               [formatter.yamlfmt]
