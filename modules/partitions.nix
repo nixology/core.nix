@@ -1,21 +1,12 @@
 { inputs, ... }:
 let
-  variants = [
-    "nixos"
-    "nixos-small"
-    "nixos-unstable"
-    "nixos-unstable-small"
-    "nixpkgs-darwin"
-    "nixpkgs-unstable"
-  ];
-
   channels =
     let
       partition = "channels";
     in
-    map (variant: {
-      partitions."${partition}-${variant}".extraInputsFlake = ../partitions/${partition}/${variant};
-    }) variants;
+    {
+      partitions.${partition}.extraInputsFlake = ../partitions/${partition};
+    };
 
   schemas =
     let
@@ -35,10 +26,10 @@ let
 
   module = {
     imports = [
+      channels
       schemas
       systems
-    ]
-    ++ channels;
+    ];
   };
 in
 module

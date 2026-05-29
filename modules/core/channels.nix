@@ -12,7 +12,7 @@ let
   channels = map (
     variant:
     let
-      channelInputs = config.partitions."channels-${variant}".extraInputs;
+      channelInputs = config.partitions.channels.extraInputs.${variant}.inputs;
 
       module = {
         perSystem =
@@ -29,8 +29,8 @@ let
       component = {
         inherit module;
         meta = {
-          description = "Provides access to packages from nixpkgs by using ${variant} channel branch as the package source, making it available as the pkgs argument across all perSystem configurations";
-          shortDescription = "package set from ${variant} channel branch";
+          description = "Provides access to packages from nixpkgs by using ${variant} channel flake as the package source, making it available as the pkgs argument across all perSystem configurations";
+          shortDescription = "package set from ${variant} channel flake";
         };
       };
     }

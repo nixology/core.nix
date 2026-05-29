@@ -6,11 +6,11 @@
       },
       "locked": {
         "dir": "nixpkgs-unstable",
-        "lastModified": 1780021882,
-        "narHash": "sha256-umPDRPFQov0bckgp0Pvdq4PLh6rwggH9/cnMnLvcboI=",
+        "lastModified": 1780022202,
+        "narHash": "sha256-nnuWdbt+geRbhqBWti5nWGsuujs3Uo0LSQ3sUpZeB0k=",
         "owner": "nixology",
         "repo": "channels.nix",
-        "rev": "7fa94201531c12f20200dec7402f8875773c2b8f",
+        "rev": "0e754b6ed1558400722dd1ac37c4b37d1a9a873e",
         "type": "github"
       },
       "original": {
