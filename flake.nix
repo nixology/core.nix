@@ -4,7 +4,7 @@
   inputs.flake-parts.url = "github:hercules-ci/flake-parts";
 
   # default pkgs channel
-  inputs.channel.url = "github:nixology/core.nix?dir=partitions/channels/nixpkgs-unstable";
+  inputs.channel.url = "github:nixology/channels.nix?dir=nixpkgs-unstable";
 
   inputs.nixpkgs.follows = "channel/nixpkgs";
 

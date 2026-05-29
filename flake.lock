@@ -5,18 +5,18 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "dir": "partitions/channels/nixpkgs-unstable",
-        "lastModified": 1779989421,
-        "narHash": "sha256-lJksr9k1XjnFAEV7bRFEl4f6ELEX7WqooEi/1e2h2YY=",
+        "dir": "nixpkgs-unstable",
+        "lastModified": 1780021882,
+        "narHash": "sha256-umPDRPFQov0bckgp0Pvdq4PLh6rwggH9/cnMnLvcboI=",
         "owner": "nixology",
-        "repo": "core.nix",
-        "rev": "5cf4ab37e0947cb562ada8342185247220d21d01",
+        "repo": "channels.nix",
+        "rev": "7fa94201531c12f20200dec7402f8875773c2b8f",
         "type": "github"
       },
       "original": {
-        "dir": "partitions/channels/nixpkgs-unstable",
+        "dir": "nixpkgs-unstable",
         "owner": "nixology",
-        "repo": "core.nix",
+        "repo": "channels.nix",
         "type": "github"
       }
     },
