@@ -7,14 +7,18 @@ let
       "${inputs.flake-parts}/modules/checks.nix"
       "${inputs.flake-parts}/modules/formatter.nix"
     ];
+
     config = {
-      flake.schemas.checks = flake-schemas.schemas.checks;
-      flake.schemas.formatter = flake-schemas.schemas.formatter;
+      flake.schemas = {
+        inherit (flake-schemas.schemas) checks formatter;
+      };
+
       perSystem =
         { lib, pkgs, ... }:
         {
           formatter = pkgs.writeShellApplication {
             name = "formatter";
+
             runtimeInputs = [
               pkgs.deadnix
               pkgs.just
@@ -23,6 +27,7 @@ let
               pkgs.yamlfmt
               pkgs.zizmor
             ];
+
             text = ''
               TMPDIR=$(mktemp -d)
 
@@ -36,7 +41,9 @@ let
               cat > "$TMPDIR/treefmt.toml" <<EOF
               [formatter.deadnix]
               command = "deadnix"
-              includes = ["**/*.nix"]
+              includes = [
+                "**/*.nix",
+              ]
 
               [formatter.just]
               command = "just"
@@ -50,12 +57,17 @@ let
 
               [formatter.nixfmt]
               command = "nixfmt"
-              includes = ["**/*.nix"]
+              includes = [
+                "**/*.nix",
+              ]
 
               [formatter.yamlfmt]
               command = "yamlfmt"
               options = ["-conf", "$TMPDIR/.yamlfmt.yaml"]
-              includes = ["**/*.yml", "**/*.yaml"]
+              includes = [
+                "**/*.yml",
+                "**/*.yaml",
+              ]
 
               [formatter.zizmor]
               command = "zizmor"

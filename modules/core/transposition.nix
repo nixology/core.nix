@@ -1,42 +1,26 @@
-{
-  inputs,
-  lib,
-  ...
-}:
+{ inputs, lib, ... }:
 let
-  module = {
+  implementation = {
     imports = [
       "${inputs.flake-parts}/modules/transposition.nix"
     ];
 
-    # default transposed attributes
     transposition = lib.mkOptionDefault { };
   };
 
-  component = {
-    inherit module;
-    dependencies = with inputs.self.components; [
-      nixology.core.flake
-      nixology.core.perSystem
-    ];
-    meta = {
-      shortDescription = "flake-parts transposition component";
-    };
-  };
-
-  checks =
+  check =
     { config, ... }:
     {
       perSystem =
         { pkgs, ... }:
         let
-          eval = config.flake.lib.evalComponent { inherit inputs; } (
-            with inputs.self.components; nixology.core.transposition
-          );
+          transpositionComponent = with inputs.self.components; nixology.core.transposition;
+
+          evalTransposition = config.flake.lib.evalComponent { inherit inputs; } transpositionComponent;
         in
         {
           checks.core-transposition = pkgs.runCommandLocal "core-transposition-check" { } ''
-            : ${builtins.seq eval.config "ok"}
+            : ${builtins.seq evalTransposition.config "ok"}
             touch $out
           '';
         };
@@ -44,10 +28,23 @@ let
 in
 {
   imports = [
-    checks
-    module
+    check
+    implementation
   ];
+
   flake.components = {
-    nixology.core.transposition = component;
+    nixology.core.transposition = {
+      inherit implementation;
+
+      dependencies = with inputs.self.components; [
+        nixology.core.flake
+        nixology.core.perSystem
+      ];
+
+      meta = {
+        description = "Expose the upstream flake-parts transposition module as a nixology component.";
+        shortDescription = "flake-parts transposition component";
+      };
+    };
   };
 }

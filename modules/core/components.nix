@@ -1,217 +1,230 @@
-{
-  config,
-  inputs,
-  ...
-}:
+{ config, inputs, ... }:
 let
-  flake-schemas = config.partitions.schemas.extraInputs.flake-schemas;
+  inherit (config.partitions.schemas.extraInputs) flake-schemas;
 
   moduleLocation = "${inputs.self.outPath}/flake.nix";
 
-  module =
+  rootConfig = config;
+
+  implementation =
     { config, lib, ... }:
-    {
-      options =
-        with lib;
-        with types;
-        let
-          resolveComponentModule =
-            {
-              domain,
-              subdomain,
-              component,
-            }:
-            assert config.flakeref != null || throw "flakeref must not be null";
-            if component._resolved == true then
-              component
-            else
-              component
-              // {
-                _resolved = true;
-                module = {
-                  key =
-                    "${config.flakeref}#components.${domain}.${subdomain}.${component.meta.name}"
-                    + lib.optionalString (component.meta.version != null) ".${component.meta.version}";
-                  imports = [ component.module ] ++ (map (dependency: dependency.module) component.dependencies);
-                  _class = "flake";
-                  _file = "${moduleLocation}#components.${domain}.${subdomain}.${component.meta.name}";
-                };
+    let
+      inherit (lib)
+        isAttrs
+        mapAttrs
+        mkDefault
+        mkOption
+        optionalString
+        types
+        ;
+
+      inherit (types)
+        addCheck
+        deferredModule
+        lazyAttrsOf
+        listOf
+        nonEmptyStr
+        nullOr
+        raw
+        submodule
+        unique
+        ;
+
+      undeclaredMetaMessage = ''
+        No option has been declared for this attribute, so its definitions can't be merged automatically.
+        Possible solutions:
+          - Load a module that defines this attribute
+          - Declare an option for this attribute
+          - Make sure the attribute is spelled correctly
+          - Define the value only once, with a single definition in a single module
+      '';
+
+      componentRefType = addCheck raw (value: isAttrs value && value ? module);
+
+      componentType =
+        { domain, subdomain }:
+        submodule (
+          { name, config, ... }:
+          {
+            options = {
+              dependencies = mkOption {
+                type = listOf componentRefType;
+                default = [ ];
+                description = "A list of other components that this component depends on.";
               };
 
-          components = mkOption {
-            type = lazyAttrsOf (lazyAttrsOf (lazyAttrsOf component));
-            default = { };
-            description = "A set of reusable components.";
-            apply = mapAttrs (
-              domain:
-              mapAttrs (
-                subdomain: mapAttrs (_: component: resolveComponentModule { inherit domain subdomain component; })
-              )
-            );
-          };
+              meta = mkOption {
+                type = nullOr (submodule {
+                  options = {
+                    name = mkOption {
+                      type = nonEmptyStr;
+                      default = name;
+                      description = "The name of the component.";
+                    };
 
-          component = submodule (
-            { name, ... }:
-            {
-              options = {
-                inherit dependencies meta module;
-                _resolved = mkOption {
-                  type = bool;
-                  default = false;
-                  description = "Internal flag. Do not set manually.";
-                  visible = false;
-                };
+                    description = mkOption {
+                      type = nullOr nonEmptyStr;
+                      default = null;
+                      description = "A description of the component.";
+                    };
+
+                    shortDescription = mkOption {
+                      type = nullOr nonEmptyStr;
+                      default = null;
+                      description = "A short description of the component.";
+                    };
+
+                    version = mkOption {
+                      type = nullOr nonEmptyStr;
+                      default = null;
+                      description = "The version of the component.";
+                    };
+                  };
+
+                  freeformType = lazyAttrsOf (
+                    unique {
+                      message = undeclaredMetaMessage;
+                    } raw
+                  );
+                });
+
+                default = { };
+                description = "Metadata about the component.";
               };
-              config = {
-                meta.name = lib.mkDefault name;
+
+              implementation = mkOption {
+                type = deferredModule;
+                description = "The module defining this component.";
               };
-            }
-          );
 
-          dependencies = mkOption {
-            type = listOf component;
-            default = [ ];
-            description = "A list of other components that this component depends on.";
-          };
+              module = mkOption {
+                type = deferredModule;
+                readOnly = true;
+                description = "The fully resolved component module including dependencies.";
+                apply =
+                  _:
+                  assert rootConfig.flakeref != null;
+                  {
+                    key =
+                      "${rootConfig.flakeref}#components.${domain}.${subdomain}.${config.meta.name}"
+                      + optionalString (config.meta.version != null) ".${config.meta.version}";
 
-          description = mkOption {
-            type = nullOr nonEmptyStr;
-            default = null;
-            description = "A description of the component.";
-          };
+                    imports = [ config.implementation ] ++ map (dependency: dependency.module) config.dependencies;
 
-          name = mkOption {
-            type = nonEmptyStr;
-            default = name;
-            description = "The name of the component.";
-          };
-
-          meta =
-            let
-              message = ''
-                No option has been declared for this attribute, so its definitions can't be merged automatically.
-                Possible solutions:
-                  - Load a module that defines this attribute
-                  - Declare an option for this attribute
-                  - Make sure the attribute is spelled correctly
-                  - Define the value only once, with a single definition in a single module
-              '';
-            in
-            mkOption {
-              type = nullOr (submodule {
-                options = {
-                  inherit
-                    description
-                    name
-                    shortDescription
-                    version
-                    ;
-                };
-                freeformType = lazyAttrsOf (unique { inherit message; } raw);
-              });
-              default = { };
-              description = ''
-                Metadata about the component. Any attribute can be set here, but some attributes
-                are represented by options, to provide appropriate configuration merging.
-              '';
+                    _class = "flake";
+                    _file = "${moduleLocation}#components.${domain}.${subdomain}.${config.meta.name}";
+                  };
+              };
             };
 
-          module = mkOption {
-            type = deferredModule;
-            description = "The module defining this component.";
-          };
+            config = {
+              meta.name = mkDefault name;
+            };
+          }
+        );
 
-          shortDescription = mkOption {
-            type = nullOr nonEmptyStr;
-            default = null;
-            description = "A short description of the component.";
-          };
+      subdomainType =
+        domain:
+        submodule (
+          { name, ... }:
+          {
+            freeformType = lazyAttrsOf (componentType {
+              inherit domain;
+              subdomain = name;
+            });
+          }
+        );
 
-          version = mkOption {
-            type = nullOr nonEmptyStr;
-            default = null;
-            description = "The version of the component.";
-          };
-        in
+      domainType = submodule (
+        { name, ... }:
         {
-          flake = { inherit components; };
-        };
+          freeformType = lazyAttrsOf (subdomainType name);
+        }
+      );
+    in
+    {
+      options.flake.components = mkOption {
+        type = lazyAttrsOf domainType;
+        default = { };
+        description = "A set of reusable components.";
+      };
 
-      config = {
-        flake.schemas.components = {
-          version = 1;
-          doc = ''
-            The `components` flake output provides importable components.
-          '';
-          inventory =
-            let
-              inherit (flake-schemas.lib) mkChildren;
-            in
-            output:
-            mkChildren (
-              builtins.mapAttrs (name: value: {
-                children =
-                  let
-                    recurse =
-                      prefix: attrs:
-                      builtins.mapAttrs (
-                        attrName: attrs:
-                        if (lib.isAttrs attrs && (attrs ? module && attrs ? _resolved)) then
-                          {
-                            what =
-                              if ((attrs.meta.shortDescription or null) != null) then
-                                "component (${attrs.meta.shortDescription})"
-                              else
-                                "component";
-                          }
-                        else
-                          {
-                            children = recurse (prefix + "." + attrName) attrs;
-                          }
-                      ) attrs;
-                  in
-                  recurse name value;
-              }) output
-            );
-        };
+      config.flake.schemas.components = {
+        version = 1;
+        doc = "The `components` flake output provides importable components.";
+
+        inventory =
+          let
+            inherit (flake-schemas.lib) mkChildren;
+
+            recurse =
+              attrs:
+              mapAttrs (
+                _: value:
+                if isAttrs value && value ? module then
+                  {
+                    what =
+                      if value.meta.shortDescription != null then
+                        "component (${value.meta.shortDescription})"
+                      else
+                        "component";
+                  }
+                else
+                  {
+                    children = recurse value;
+                  }
+              ) attrs;
+          in
+          output:
+          mkChildren (
+            mapAttrs (_: value: {
+              children = recurse value;
+            }) output
+          );
       };
     };
 
-  component = {
-    inherit module;
-    dependencies = with inputs.self.components; [
-      nixology.core.schemas
-    ];
-    meta = {
-      description = "Provides a reusable component system for flake modules organized into a structured domain.subdomain.name hierarchy with support for dependencies and metadata";
-      shortDescription = "reusable component system for flake modules";
-    };
-  };
-
-  checks =
+  check =
     { config, ... }:
     {
       perSystem =
         { pkgs, ... }:
+        with inputs.self.components;
         let
-          eval = config.flake.lib.evalComponent { inherit inputs; } (
-            with inputs.self.components; nixology.core.components
-          );
+          eval = config.flake.lib.evalComponent {
+            inherit inputs;
+          } nixology.core.components;
         in
         {
           checks.core-components = pkgs.runCommandLocal "core-components-check" { } ''
             : ${builtins.seq eval.config "ok"}
-            touch $out
+            touch "$out"
           '';
         };
     };
 in
 {
   imports = [
-    checks
-    module
+    check
+    implementation
   ];
+
   flake.components = {
-    nixology.core.components = component;
+    nixology.core.components = {
+      inherit implementation;
+
+      dependencies = with inputs.self.components; [
+        nixology.core.schemas
+      ];
+
+      meta = {
+        shortDescription = "reusable component system for flake modules";
+        description = ''
+          Provides a reusable component system for flake modules organized into a
+          structured domain.subdomain.name hierarchy with support for dependencies
+          and metadata.
+        '';
+      };
+    };
   };
 }

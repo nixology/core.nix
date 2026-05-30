@@ -1,48 +1,50 @@
-{
-  inputs,
-  ...
-}:
+{ inputs, ... }:
 let
-  module = { };
+  implementation = { };
 
-  component = {
-    inherit module;
-    dependencies = with inputs.self.components; [
-      nixology.core.flake
-      nixology.core.flakeref
-      nixology.core.moduleWithSystem
-      nixology.core.perSystem
-      nixology.core.pkgs
-      nixology.core.transposition
-      nixology.core.withSystem
-      nixology.systems.default
-    ];
-    meta = {
-      shortDescription = "default module for nixology";
-    };
-  };
-
-  checks =
+  check =
     { config, ... }:
     {
       perSystem =
         { pkgs, ... }:
         let
-          eval = config.flake.lib.evalComponent { inherit inputs; } (
-            with inputs.self.components; nixology.core.default
-          );
+          defaultComponent = with inputs.self.components; nixology.core.default;
+
+          evalDefault = config.flake.lib.evalComponent { inherit inputs; } defaultComponent;
         in
         {
           checks.core-default = pkgs.runCommandLocal "core-default-check" { } ''
-            : ${builtins.seq eval.config "ok"}
+            : ${builtins.seq evalDefault.config "ok"}
             touch $out
           '';
         };
     };
 in
 {
-  imports = [ checks ];
+  imports = [
+    check
+    implementation
+  ];
+
   flake.components = {
-    nixology.core.default = component;
+    nixology.core.default = {
+      inherit implementation;
+
+      dependencies = with inputs.self.components; [
+        nixology.core.flake
+        nixology.core.flakeref
+        nixology.core.moduleWithSystem
+        nixology.core.perSystem
+        nixology.core.pkgs
+        nixology.core.transposition
+        nixology.core.withSystem
+        nixology.systems.default
+      ];
+
+      meta = {
+        description = "Default module for nixology.";
+        shortDescription = "default module for nixology";
+      };
+    };
   };
 }

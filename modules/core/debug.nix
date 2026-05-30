@@ -5,10 +5,25 @@
   ...
 }:
 let
-  module =
+  implementation =
     let
-      flake-schemas = config.partitions.schemas.extraInputs.flake-schemas;
-      inherit (flake-schemas.lib) mkChildren;
+      inherit (config.partitions.schemas.extraInputs.flake-schemas.lib) mkChildren;
+
+      version = 1;
+
+      mkSchema = doc: inventory: {
+        inherit version doc inventory;
+      };
+
+      perSystemDoc = target: ''
+        The `${target}` flake output provides the perSystem flake-parts configuration.
+
+        An attribute set consisting of the `perSystem` attributes, plus the extra
+        attributes `_module`, `config`, `options`, `extendModules`.
+
+        N.B. these are not part of the `config` parameter, but are merged in for
+        debugging convenience.
+      '';
     in
     { config, ... }:
     {
@@ -17,67 +32,58 @@ let
       ];
 
       config = lib.mkIf config.debug {
-        flake.schemas =
-          let
-            version = 1;
-          in
-          {
-            allSystems = {
-              inherit version;
-              doc = ''
+        flake.schemas = {
+          allSystems =
+            mkSchema
+              ''
                 The `allSystems` flake output provides the perSystem flake-parts configuration.
-                An attribute set of configured systems, each consisting of the `perSystem` attributes, plus the extra attributes `_module`, `config`, `options`, `extendModules`.
-                N.B. these are not part of the `config` parameter, but are merged in for debugging convenience.
-              '';
-              inventory =
+
+                An attribute set of configured systems, each consisting of the `perSystem`
+                attributes, plus the extra attributes `_module`, `config`, `options`,
+                `extendModules`.
+
+                N.B. these are not part of the `config` parameter, but are merged in for
+                debugging convenience.
+              ''
+              (
                 output:
                 mkChildren (
-                  builtins.mapAttrs (name: value: {
+                  builtins.mapAttrs (_name: _value: {
                     what = "perSystem flake-parts configuration";
                   }) output
-                );
-            };
+                )
+              );
 
-            debug = {
-              inherit version;
-              doc = ''
+          debug =
+            mkSchema
+              ''
                 The `debug` flake output provides the top-level flake-parts configuration.
-                An attribute set consisting of the `config` attributes, plus the extra attributes `_module`, `config`, `options`, `extendModules`.
-                N.B. these are not part of the `config` parameter, but are merged in for debugging convenience.
-              '';
-              inventory = output: { what = "top-level flake-parts configuration"; };
-            };
 
-            currentSystem = {
-              inherit version;
-              doc = ''
-                The `currentSystem` flake output provides the perSystem flake-parts configuration for the current system.
-                An attribute set consisting of the `perSystem` attributes, plus the extra attributes `_module`, `config`, `options`, `extendModules`.
-                N.B. these are not part of the `config` parameter, but are merged in for debugging convenience.
+                An attribute set consisting of the `config` attributes, plus the extra
+                attributes `_module`, `config`, `options`, `extendModules`.
+
+                N.B. these are not part of the `config` parameter, but are merged in for
+                debugging convenience.
+              ''
+              (_output: {
+                what = "top-level flake-parts configuration";
+              });
+
+          currentSystem =
+            mkSchema
+              ''
+                ${perSystemDoc "currentSystem"}
+
                 Only available in impure mode.
-              '';
-              inventory = output: {
+              ''
+              (output: {
                 what = "perSystem flake-parts configuration for ${output.allModuleArgs.system}";
-              };
-            };
-          };
+              });
+        };
       };
     };
 
-  component = {
-    inherit module;
-    dependencies = with inputs.self.components; [
-      nixology.core.flake
-      nixology.core.perSystem
-      nixology.core.schemas
-    ];
-    meta = {
-      description = "Expose debug attributes for the flake.";
-      shortDescription = "expose debug attributes for the flake";
-    };
-  };
-
-  checks =
+  check =
     { config, ... }:
     {
       perSystem =
@@ -85,21 +91,23 @@ let
         let
           evalComponent = component: config.flake.lib.evalComponent { inherit inputs; } component;
 
-          eval = evalComponent (with inputs.self.components; nixology.core.debug);
+          debugComponent = with inputs.self.components; nixology.core.debug;
 
-          evalWithTrue = evalComponent {
+          evalDefault = evalComponent debugComponent;
+
+          evalEnabled = evalComponent {
             module = {
               imports = [
                 { debug = true; }
-                (with inputs.self.components; nixology.core.debug.module)
+                debugComponent.module
               ];
             };
           };
         in
         {
           checks.core-debug = pkgs.runCommandLocal "core-debug-check" { } ''
-            : ${builtins.seq eval.config "ok"}
-            : ${builtins.seq evalWithTrue.config "ok"}
+            : ${builtins.seq evalDefault.config "ok"}
+            : ${builtins.seq evalEnabled.config "ok"}
             touch $out
           '';
         };
@@ -107,10 +115,24 @@ let
 in
 {
   imports = [
-    checks
-    module
+    check
+    implementation
   ];
+
   flake.components = {
-    nixology.core.debug = component;
+    nixology.core.debug = {
+      inherit implementation;
+
+      dependencies = with inputs.self.components; [
+        nixology.core.flake
+        nixology.core.perSystem
+        nixology.core.schemas
+      ];
+
+      meta = {
+        description = "Expose debug attributes for the flake.";
+        shortDescription = "expose debug attributes for the flake";
+      };
+    };
   };
 }

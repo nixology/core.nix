@@ -1,5 +1,7 @@
 { config, lib, ... }:
 let
+  extraInputs = config.partitions.systems.extraInputs;
+
   variants = [
     "default"
     "default-darwin"
@@ -10,38 +12,39 @@ let
     "x86_64-linux"
   ];
 
-  inputs = config.partitions.systems.extraInputs;
-
-  systems = map (
+  mkSystemsComponent =
     variant:
     let
-      module = {
+      implementation = {
         systems =
           if variant == "default" then
-            lib.mkOptionDefault (import inputs."${variant}")
+            lib.mkOptionDefault (import extraInputs.${variant})
           else
-            # n.b. don't want merge semantics here; exclusively want specific systems variant, so mkForce
-            lib.mkForce (import inputs."${variant}");
+            lib.mkForce (import extraInputs.${variant});
       };
     in
     {
-      inherit variant;
-      component = {
-        inherit module;
-        meta = {
-          shortDescription = "flake systems";
-        };
+      inherit implementation;
+
+      meta = {
+        description = "Configure the flake systems list using the `${variant}` systems input.";
+        shortDescription = "flake systems: ${variant}";
       };
-    }
-  ) variants;
+    };
+
+  components = builtins.listToAttrs (
+    map (variant: {
+      name = variant;
+      value = mkSystemsComponent variant;
+    }) variants
+  );
 in
 {
-  imports = map (x: x.component.module) (builtins.filter (x: x.variant == "default") systems);
+  imports = [
+    components.default.implementation
+  ];
+
+  flake.components = {
+    nixology.systems = components;
+  };
 }
-// (builtins.foldl' lib.recursiveUpdate { } (
-  map (systems': {
-    flake.components = {
-      nixology.systems.${systems'.variant} = systems'.component;
-    };
-  }) systems
-))

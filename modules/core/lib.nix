@@ -5,17 +5,15 @@
   ...
 }:
 let
-  flake-schemas = config.partitions.schemas.extraInputs.flake-schemas;
+  inherit (config.partitions.schemas.extraInputs) flake-schemas;
   flake-parts-lib = inputs.flake-parts.lib;
 
   library =
     let
       coreInputs = inputs;
 
-      evalComponent = args: component: evalFlakeModule null args component.module;
-
       evalFlakeModule =
-        config:
+        extraConfig:
         args@{
           inputs,
           specialArgs ? { },
@@ -24,125 +22,108 @@ let
         }:
         let
           inputsPos = builtins.unsafeGetAttrPos "inputs" args;
+
           errorLocation =
-            # Best case: user makes it explicit
             args.moduleLocation or (
-              # Slightly worse: Nix does not technically commit to unsafeGetAttrPos semantics
               if inputsPos != null then
                 inputsPos.file
-              # Slightly worse: self may not be valid when an error occurs
               else if args ? inputs.self.outPath then
                 args.inputs.self.outPath + "/flake.nix"
-              # Fallback
               else
                 "<mkFlake argument>"
             );
         in
-        (
-          module:
-          lib.evalModules {
-            specialArgs = {
-              inherit self flake-parts-lib;
-              inputs = args.inputs;
-            }
-            // specialArgs;
-            modules = [
-              (lib.setDefaultModuleLocation errorLocation module)
-            ]
-            ++ lib.optionals (config != null) (
-              with coreInputs.self.components;
-              map (component: component.module) [
-                nixology.core.default
-              ]
-            );
-            class = "flake";
-          }
-        );
+        module:
+        lib.evalModules {
+          class = "flake";
 
-      mkFlake =
-        flakeArgs: flakeModule:
-        let
-          eval = evalFlakeModule config flakeArgs flakeModule;
-        in
-        eval.config.flake;
+          specialArgs = {
+            inherit self flake-parts-lib;
+            inherit (args) inputs;
+          }
+          // specialArgs;
+
+          modules = [
+            (lib.setDefaultModuleLocation errorLocation module)
+          ]
+          ++ lib.optionals (extraConfig != null) [
+            coreInputs.self.components.nixology.core.default.module
+          ];
+        };
+
+      evalComponent = args: component: evalFlakeModule null args component.module;
+
+      mkFlake = flakeArgs: flakeModule: (evalFlakeModule config flakeArgs flakeModule).config.flake;
 
       mkTOMLFlake =
         flakeArgs: tomlFile:
         let
           toml = builtins.fromTOML (builtins.readFile tomlFile);
+          source = lib.lists.head toml.sources;
+
+          name = lib.lists.last (lib.strings.splitString "/" source.url);
+          componentName = lib.lists.head source.components;
+
+          componentPath = lib.strings.splitString "." "${name}.components.${componentName}";
+          module = lib.getAttrFromPath componentPath flakeArgs.inputs;
+
           args = flakeArgs // {
             inherit (toml.flake) flakeref;
           };
-          source = lib.lists.head toml.sources;
-          name = lib.lists.last (lib.strings.split "/" source.url);
-          component = lib.lists.head source.components;
-          input = "${name}.components.${component}";
-          module = lib.getAttrFromPath (lib.strings.splitString "." input) flakeArgs.inputs;
         in
         mkFlake args module;
 
       modulesIn =
         directory:
-        with lib;
-        let
-          moduleFiles =
-            if filesystem.pathIsDirectory directory then
-              (filter (n: strings.hasSuffix ".nix" n) (filesystem.listFilesRecursive directory))
-            else
-              [ ];
-        in
-        moduleFiles;
+        if lib.filesystem.pathIsDirectory directory then
+          lib.filter (path: lib.strings.hasSuffix ".nix" path) (lib.filesystem.listFilesRecursive directory)
+        else
+          [ ];
 
       forFlake =
         self:
         let
           lock = builtins.fromJSON (builtins.readFile "${self.outPath}/flake.lock");
 
-          getNode = input: builtins.getAttr (pname input) lock.nodes;
-
-          getLockedNode = input: (getNode input).locked;
-
-          getOriginalNode = input: (getNode input).original;
-
-          pname =
+          inputName =
             input:
             builtins.head (
               builtins.filter (name: self.inputs.${name} == input) (builtins.attrNames self.inputs)
             );
 
-          ref = input: (getOriginalNode input).ref;
+          getNode = input: lock.nodes.${inputName input};
+          locked = input: (getNode input).locked;
+          original = input: (getNode input).original;
 
-          rev = input: (getLockedNode input).rev;
-
-          src = input: input;
-
-          url = input: (getLockedNode input).url;
+          ref = input: (original input).ref or null;
+          rev = input: (locked input).rev or null;
+          url = input: (locked input).url or null;
 
           version =
             input:
             let
               ref' = ref input;
             in
-            if builtins.substring 0 1 ref' == "v" then
-              builtins.substring 1 ((builtins.stringLength ref') - 1) ref'
+            if ref' == null then
+              null
+            else if builtins.substring 0 1 ref' == "v" then
+              builtins.substring 1 (builtins.stringLength ref' - 1) ref'
             else
               ref';
 
           metadataForInput = input: {
-            pname = pname input;
+            pname = inputName input;
+            inherit input;
+            src = input;
             ref = ref input;
             rev = rev input;
-            src = src input;
             url = url input;
             version = version input;
           };
         in
         {
-          inherit
-            metadataForInput
-            ;
+          inherit metadataForInput;
         };
-
     in
     {
       inherit
@@ -166,54 +147,56 @@ let
       in
       output:
       mkChildren (
-        builtins.mapAttrs (name: value: {
+        builtins.mapAttrs (_name: value: {
           what = if builtins.isFunction value then "library function" else "library value";
         }) output
       );
   };
 
-  module =
-    { inputs, ... }:
-    {
-      flake.lib = lib.mkDefault library;
-      flake.schemas.lib = schema;
-    };
-
-  component = {
-    inherit module;
-    dependencies = with inputs.self.components; [
-      nixology.core.schemas
-    ];
-    meta = {
-      shortDescription = "library of functions for nixology methodology";
-    };
+  implementation = {
+    flake.lib = lib.mkDefault library;
+    flake.schemas.lib = schema;
   };
 
-  checks =
+  check =
     { config, ... }:
     {
       perSystem =
         { pkgs, ... }:
         let
-          eval = config.flake.lib.evalComponent { inherit inputs; } (
-            with inputs.self.components; nixology.core.lib
-          );
+          libComponent = with inputs.self.components; nixology.core.lib;
+
+          evalLib = config.flake.lib.evalComponent { inherit inputs; } libComponent;
         in
         {
           checks.core-lib = pkgs.runCommandLocal "core-lib-check" { } ''
-            : ${builtins.seq eval.config "ok"}
+            : ${builtins.seq evalLib.config "ok"}
+            : ${builtins.seq evalLib.config.flake.lib.mkFlake "ok"}
+            : ${builtins.seq evalLib.config.flake.schemas.lib "ok"}
             touch $out
           '';
         };
     };
 in
 {
-  imports = [ checks ];
+  imports = [ check ];
 
+  # implementation
   flake.lib = library;
   flake.schemas.lib = schema;
 
   flake.components = {
-    nixology.core.lib = component;
+    nixology.core.lib = {
+      inherit implementation;
+
+      dependencies = with inputs.self.components; [
+        nixology.core.schemas
+      ];
+
+      meta = {
+        description = "Provide helper functions for nixology flakes and components.";
+        shortDescription = "library functions for nixology";
+      };
+    };
   };
 }

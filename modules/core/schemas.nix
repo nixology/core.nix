@@ -1,46 +1,35 @@
 { config, inputs, ... }:
 let
-  flake-schemas = config.partitions.schemas.extraInputs.flake-schemas;
+  inherit (config.partitions.schemas.extraInputs) flake-schemas;
 
-  module =
+  implementation =
     { lib, ... }:
     {
-      options =
-        with lib;
-        with types;
-        {
-          flake.schemas = mkOption {
-            type = lazyAttrsOf (lazyAttrsOf anything);
-            default = { };
-            description = "Schemas for flake output types.";
-          };
-        };
-      config = {
-        flake.schemas = { inherit (flake-schemas.schemas) schemas; };
+      options.flake.schemas = lib.mkOption {
+        type = lib.types.lazyAttrsOf (lib.types.lazyAttrsOf lib.types.anything);
+        default = { };
+        description = "Schemas for flake output types.";
+      };
+
+      config.flake.schemas = {
+        inherit (flake-schemas.schemas) schemas;
       };
     };
 
-  component = {
-    inherit module;
-    dependencies = with inputs.self.components; [ nixology.core.flake ];
-    meta = {
-      shortDescription = "flake schemas";
-    };
-  };
-
-  checks =
+  check =
     { config, ... }:
     {
       perSystem =
         { pkgs, ... }:
         let
-          eval = config.flake.lib.evalComponent { inherit inputs; } (
-            with inputs.self.components; nixology.core.schemas
-          );
+          schemasComponent = with inputs.self.components; nixology.core.schemas;
+
+          evalSchemas = config.flake.lib.evalComponent { inherit inputs; } schemasComponent;
         in
         {
           checks.core-schemas = pkgs.runCommandLocal "core-schemas-check" { } ''
-            : ${builtins.seq eval.config "ok"}
+            : ${builtins.seq evalSchemas.config "ok"}
+            : ${builtins.seq evalSchemas.config.flake.schemas.schemas "ok"}
             touch $out
           '';
         };
@@ -48,10 +37,22 @@ let
 in
 {
   imports = [
-    checks
-    module
+    check
+    implementation
   ];
+
   flake.components = {
-    nixology.core.schemas = component;
+    nixology.core.schemas = {
+      inherit implementation;
+
+      dependencies = with inputs.self.components; [
+        nixology.core.flake
+      ];
+
+      meta = {
+        description = "Provide flake schemas support and expose the flake-schemas schema.";
+        shortDescription = "flake schemas";
+      };
+    };
   };
 }

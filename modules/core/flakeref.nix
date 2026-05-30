@@ -1,43 +1,28 @@
-{ config, inputs, ... }:
+{ inputs, ... }:
 let
-  module =
+  implementation =
     { lib, ... }:
     {
-      options =
-        with lib;
-        with types;
-        let
-          flakeref = mkOption {
-            type = nullOr str;
-            description = "The flake reference for this flake.";
-            default = null;
-          };
-        in
-        {
-          inherit flakeref;
-        };
+      options.flakeref = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = "The flake reference for this flake.";
+      };
     };
 
-  component = {
-    inherit module;
-    meta = {
-      description = "Provides a unique identifier for the flake.";
-    };
-  };
-
-  checks =
+  check =
     { config, ... }:
     {
       perSystem =
         { pkgs, ... }:
         let
-          eval = config.flake.lib.evalComponent { inherit inputs; } (
-            with inputs.self.components; nixology.core.flakeref
-          );
+          flakerefComponent = with inputs.self.components; nixology.core.flakeref;
+
+          evalFlakeref = config.flake.lib.evalComponent { inherit inputs; } flakerefComponent;
         in
         {
           checks.core-flakeref = pkgs.runCommandLocal "core-flakeref-check" { } ''
-            : ${builtins.seq eval.config "ok"}
+            : ${builtins.seq evalFlakeref.config "ok"}
             touch $out
           '';
         };
@@ -45,10 +30,18 @@ let
 in
 {
   imports = [
-    checks
-    module
+    check
+    implementation
   ];
+
   flake.components = {
-    nixology.core.flakeref = component;
+    nixology.core.flakeref = {
+      inherit implementation;
+
+      meta = {
+        description = "Provide a unique identifier for the flake.";
+        shortDescription = "flake reference option";
+      };
+    };
   };
 }

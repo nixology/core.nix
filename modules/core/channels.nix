@@ -9,37 +9,28 @@ let
     "nixpkgs-unstable"
   ];
 
-  channels = map (
-    variant:
-    let
-      channelInputs = config.partitions.channels.extraInputs.${variant}.inputs;
+  mkChannelComponent = variant: {
+    implementation.perSystem =
+      { system, ... }:
+      let
+        inherit (config.partitions.channels.extraInputs.${variant}.inputs) nixpkgs;
+      in
+      {
+        _module.args.pkgs = nixpkgs.legacyPackages.${system};
+      };
 
-      module = {
-        perSystem =
-          { system, ... }:
-          {
-            _module.args.pkgs =
-              builtins.seq channelInputs.nixpkgs
-                channelInputs.nixpkgs.legacyPackages.${system};
-          };
-      };
-    in
-    {
-      inherit variant;
-      component = {
-        inherit module;
-        meta = {
-          description = "Provides access to packages from nixpkgs by using ${variant} channel flake as the package source, making it available as the pkgs argument across all perSystem configurations";
-          shortDescription = "package set from ${variant} channel flake";
-        };
-      };
-    }
-  ) variants;
-in
-builtins.foldl' lib.recursiveUpdate { } (
-  map (channels': {
-    flake.components = {
-      nixology.channels.${channels'.variant} = channels'.component;
+    meta = {
+      shortDescription = "package set from ${variant} channel flake";
+      description = ''
+        Provides access to packages from nixpkgs using the ${variant}
+        channel flake as the package source, making it available as the
+        pkgs argument across all perSystem configurations.
+      '';
     };
-  }) channels
-)
+  };
+in
+{
+  flake.components = {
+    nixology.channels = lib.genAttrs variants mkChannelComponent;
+  };
+}

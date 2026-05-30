@@ -1,34 +1,24 @@
-{
-  inputs,
-  ...
-}:
+{ inputs, ... }:
 let
-  module = {
+  implementation = {
     imports = [
       "${inputs.flake-parts}/modules/moduleWithSystem.nix"
     ];
   };
 
-  component = {
-    inherit module;
-    meta = {
-      shortDescription = "flake-parts moduleWithSystem component";
-    };
-  };
-
-  checks =
+  check =
     { config, ... }:
     {
       perSystem =
         { pkgs, ... }:
         let
-          eval = config.flake.lib.evalComponent { inherit inputs; } (
-            with inputs.self.components; nixology.core.moduleWithSystem
-          );
+          moduleWithSystemComponent = with inputs.self.components; nixology.core.moduleWithSystem;
+
+          evalModuleWithSystem = config.flake.lib.evalComponent { inherit inputs; } moduleWithSystemComponent;
         in
         {
           checks.core-moduleWithSystem = pkgs.runCommandLocal "core-moduleWithSystem-check" { } ''
-            : ${builtins.seq eval.config "ok"}
+            : ${builtins.seq evalModuleWithSystem.config "ok"}
             touch $out
           '';
         };
@@ -36,10 +26,18 @@ let
 in
 {
   imports = [
-    checks
-    module
+    check
+    implementation
   ];
+
   flake.components = {
-    nixology.core.moduleWithSystem = component;
+    nixology.core.moduleWithSystem = {
+      inherit implementation;
+
+      meta = {
+        description = "Expose the upstream flake-parts moduleWithSystem module as a nixology component.";
+        shortDescription = "flake-parts moduleWithSystem component";
+      };
+    };
   };
 }

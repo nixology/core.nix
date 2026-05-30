@@ -1,34 +1,24 @@
-{
-  inputs,
-  ...
-}:
+{ inputs, ... }:
 let
-  module = {
+  implementation = {
     imports = [
       "${inputs.flake-parts}/modules/flake.nix"
     ];
   };
 
-  component = {
-    inherit module;
-    meta = {
-      shortDescription = "flake-parts flake component";
-    };
-  };
-
-  checks =
+  check =
     { config, ... }:
     {
       perSystem =
         { pkgs, ... }:
         let
-          eval = config.flake.lib.evalComponent { inherit inputs; } (
-            with inputs.self.components; nixology.core.flake
-          );
+          flakeComponent = with inputs.self.components; nixology.core.flake;
+
+          evalFlake = config.flake.lib.evalComponent { inherit inputs; } flakeComponent;
         in
         {
           checks.core-flake = pkgs.runCommandLocal "core-flake-check" { } ''
-            : ${builtins.seq eval.config "ok"}
+            : ${builtins.seq evalFlake.config "ok"}
             touch $out
           '';
         };
@@ -36,10 +26,18 @@ let
 in
 {
   imports = [
-    checks
-    module
+    check
+    implementation
   ];
+
   flake.components = {
-    nixology.core.flake = component;
+    nixology.core.flake = {
+      inherit implementation;
+
+      meta = {
+        description = "Expose the upstream flake-parts flake module as a nixology component.";
+        shortDescription = "flake-parts flake component";
+      };
+    };
   };
 }
