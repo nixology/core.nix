@@ -19,20 +19,12 @@ let
   check =
     { config, ... }:
     {
-      perSystem =
-        { pkgs, ... }:
-        let
-          schemasComponent = with inputs.self.components; nixology.core.schemas;
-
-          evalSchemas = config.flake.lib.evalComponent { inherit inputs; } schemasComponent;
-        in
-        {
-          checks.core-schemas = pkgs.runCommandLocal "core-schemas-check" { } ''
-            : ${builtins.seq evalSchemas.config "ok"}
-            : ${builtins.seq evalSchemas.config.flake.schemas.schemas "ok"}
-            touch $out
-          '';
-        };
+      perSystem = config.flake.lib.mkComponentCheck {
+        name = "nixology-core-schemas";
+        component = with inputs.self.components; nixology.core.schemas;
+        extraChecks = ({ eval, ... }: [ eval.config.flake.schemas.schemas ]);
+        inherit config;
+      };
     };
 in
 {

@@ -64,20 +64,12 @@ let
   check =
     { config, ... }:
     {
-      perSystem =
-        { pkgs, ... }:
-        let
-          pkgsComponent = with inputs.self.components; nixology.core.pkgs;
-
-          evalPkgs = config.flake.lib.evalComponent { inherit inputs; } pkgsComponent;
-        in
-        {
-          checks.core-pkgs = pkgs.runCommandLocal "core-pkgs-check" { } ''
-            : ${builtins.seq evalPkgs.config "ok"}
-            : ${builtins.seq evalPkgs.config.pkgs.settings.allowUnfree "ok"}
-            touch $out
-          '';
-        };
+      perSystem = config.flake.lib.mkComponentCheck {
+        name = "nixology-core-pkgs";
+        component = with inputs.self.components; nixology.core.pkgs;
+        extraChecks = ({ eval, ... }: [ eval.config.pkgs.settings.allowUnfree ]);
+        inherit config;
+      };
     };
 in
 {

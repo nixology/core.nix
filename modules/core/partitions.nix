@@ -5,19 +5,11 @@ let
   check =
     { config, ... }:
     {
-      perSystem =
-        { pkgs, ... }:
-        let
-          partitionsComponent = with inputs.self.components; nixology.core.partitions;
-
-          evalPartitions = config.flake.lib.evalComponent { inherit inputs; } partitionsComponent;
-        in
-        {
-          checks.core-partitions = pkgs.runCommandLocal "core-partitions-check" { } ''
-            : ${builtins.seq evalPartitions.config "ok"}
-            touch $out
-          '';
-        };
+      perSystem = config.flake.lib.mkComponentCheck {
+        name = "nixology-core-partitions";
+        component = with inputs.self.components; nixology.core.partitions;
+        inherit config;
+      };
     };
 in
 {

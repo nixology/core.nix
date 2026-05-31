@@ -9,19 +9,11 @@ let
   check =
     { config, ... }:
     {
-      perSystem =
-        { pkgs, ... }:
-        let
-          moduleWithSystemComponent = with inputs.self.components; nixology.core.moduleWithSystem;
-
-          evalModuleWithSystem = config.flake.lib.evalComponent { inherit inputs; } moduleWithSystemComponent;
-        in
-        {
-          checks.core-moduleWithSystem = pkgs.runCommandLocal "core-moduleWithSystem-check" { } ''
-            : ${builtins.seq evalModuleWithSystem.config "ok"}
-            touch $out
-          '';
-        };
+      perSystem = config.flake.lib.mkComponentCheck {
+        name = "nixology-core-moduleWithSystem";
+        component = with inputs.self.components; nixology.core.moduleWithSystem;
+        inherit config;
+      };
     };
 in
 {

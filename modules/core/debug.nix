@@ -86,31 +86,23 @@ let
   check =
     { config, ... }:
     {
-      perSystem =
-        { pkgs, ... }:
-        let
-          evalComponent = component: config.flake.lib.evalComponent { inherit inputs; } component;
-
-          debugComponent = with inputs.self.components; nixology.core.debug;
-
-          evalDefault = evalComponent debugComponent;
-
-          evalEnabled = evalComponent {
-            module = {
-              imports = [
-                { debug = true; }
-                debugComponent.module
-              ];
+      perSystem = config.flake.lib.mkComponentCheck {
+        name = "nixology-core-debug";
+        component = with inputs.self.components; nixology.core.debug;
+        extraChecks = ({ evalComponent, component, ... }:
+          let
+            evalEnabled = evalComponent {
+              module = {
+                imports = [
+                  { debug = true; }
+                  component.module
+                ];
+              };
             };
-          };
-        in
-        {
-          checks.core-debug = pkgs.runCommandLocal "core-debug-check" { } ''
-            : ${builtins.seq evalDefault.config "ok"}
-            : ${builtins.seq evalEnabled.config "ok"}
-            touch $out
-          '';
-        };
+          in
+          [ evalEnabled.config ]);
+        inherit config;
+      };
     };
 in
 {

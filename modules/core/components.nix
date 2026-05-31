@@ -187,20 +187,11 @@ let
   check =
     { config, ... }:
     {
-      perSystem =
-        { pkgs, ... }:
-        with inputs.self.components;
-        let
-          eval = config.flake.lib.evalComponent {
-            inherit inputs;
-          } nixology.core.components;
-        in
-        {
-          checks.core-components = pkgs.runCommandLocal "core-components-check" { } ''
-            : ${builtins.seq eval.config "ok"}
-            touch "$out"
-          '';
-        };
+      perSystem = config.flake.lib.mkComponentCheck {
+        name = "nixology-core-components";
+        component = with inputs.self.components; nixology.core.components;
+        inherit config;
+      };
     };
 in
 {

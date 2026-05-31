@@ -124,12 +124,36 @@ let
         {
           inherit metadataForInput;
         };
+
+      mkComponentCheck =
+        {
+          name,
+          component,
+          extraChecks ? _: [ ],
+          config,
+        }:
+        { pkgs, lib, ... }:
+        let
+          evalFn = c: config.flake.lib.evalComponent { inputs = coreInputs; } c;
+          eval = evalFn component;
+          extra = extraChecks {
+            evalComponent = evalFn;
+            inherit eval component;
+          };
+          seqLine = v: ": ${builtins.seq v "ok"}";
+        in
+        {
+          checks.${name} = pkgs.runCommandLocal "${name}-check" { } (
+            lib.concatLines ([ (seqLine eval.config) ] ++ map seqLine extra ++ [ "touch $out" ])
+          );
+        };
     in
     {
       inherit
         evalComponent
         evalFlakeModule
         forFlake
+        mkComponentCheck
         mkFlake
         mkTOMLFlake
         modulesIn
@@ -161,21 +185,15 @@ let
   check =
     { config, ... }:
     {
-      perSystem =
-        { pkgs, ... }:
-        let
-          libComponent = with inputs.self.components; nixology.core.lib;
-
-          evalLib = config.flake.lib.evalComponent { inherit inputs; } libComponent;
-        in
-        {
-          checks.core-lib = pkgs.runCommandLocal "core-lib-check" { } ''
-            : ${builtins.seq evalLib.config "ok"}
-            : ${builtins.seq evalLib.config.flake.lib.mkFlake "ok"}
-            : ${builtins.seq evalLib.config.flake.schemas.lib "ok"}
-            touch $out
-          '';
-        };
+      perSystem = config.flake.lib.mkComponentCheck {
+        name = "nixology-core-lib";
+        component = with inputs.self.components; nixology.core.lib;
+        extraChecks = ({ eval, ... }: [
+          eval.config.flake.lib.mkFlake
+          eval.config.flake.schemas.lib
+        ]);
+        inherit config;
+      };
     };
 in
 {

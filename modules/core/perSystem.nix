@@ -9,19 +9,11 @@ let
   check =
     { config, ... }:
     {
-      perSystem =
-        { pkgs, ... }:
-        let
-          perSystemComponent = with inputs.self.components; nixology.core.perSystem;
-
-          evalPerSystem = config.flake.lib.evalComponent { inherit inputs; } perSystemComponent;
-        in
-        {
-          checks.core-perSystem = pkgs.runCommandLocal "core-perSystem-check" { } ''
-            : ${builtins.seq evalPerSystem.config "ok"}
-            touch $out
-          '';
-        };
+      perSystem = config.flake.lib.mkComponentCheck {
+        name = "nixology-core-perSystem";
+        component = with inputs.self.components; nixology.core.perSystem;
+        inherit config;
+      };
     };
 in
 {

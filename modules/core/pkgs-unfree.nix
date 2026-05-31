@@ -7,26 +7,16 @@ let
   check =
     { config, ... }:
     {
-      perSystem =
-        { pkgs, ... }:
-        let
-          pkgsUnfreeComponent = with inputs.self.components; nixology.core.pkgs-unfree;
-
-          evalPkgsUnfree = config.flake.lib.evalComponent { inherit inputs; } pkgsUnfreeComponent;
-        in
-        {
-          checks.core-pkgs-unfree = pkgs.runCommandLocal "core-pkgs-unfree-check" { } ''
-            : ${builtins.seq evalPkgsUnfree.config "ok"}
-            : ${builtins.seq evalPkgsUnfree.config.pkgs.settings.allowUnfree "ok"}
-            touch $out
-          '';
-        };
+      perSystem = config.flake.lib.mkComponentCheck {
+        name = "nixology-core-pkgs-unfree";
+        component = with inputs.self.components; nixology.core.pkgs-unfree;
+        extraChecks = ({ eval, ... }: [ eval.config.pkgs.settings.allowUnfree ]);
+        inherit config;
+      };
     };
 in
 {
-  imports = [
-    check
-  ];
+  imports = [ check ];
 
   flake.components = {
     nixology.core.pkgs-unfree = {

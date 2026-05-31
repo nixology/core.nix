@@ -11,19 +11,11 @@ let
   check =
     { config, ... }:
     {
-      perSystem =
-        { pkgs, ... }:
-        let
-          transpositionComponent = with inputs.self.components; nixology.core.transposition;
-
-          evalTransposition = config.flake.lib.evalComponent { inherit inputs; } transpositionComponent;
-        in
-        {
-          checks.core-transposition = pkgs.runCommandLocal "core-transposition-check" { } ''
-            : ${builtins.seq evalTransposition.config "ok"}
-            touch $out
-          '';
-        };
+      perSystem = config.flake.lib.mkComponentCheck {
+        name = "nixology-core-transposition";
+        component = with inputs.self.components; nixology.core.transposition;
+        inherit config;
+      };
     };
 in
 {

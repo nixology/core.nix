@@ -5,19 +5,11 @@ let
   check =
     { config, ... }:
     {
-      perSystem =
-        { pkgs, ... }:
-        let
-          defaultComponent = with inputs.self.components; nixology.core.default;
-
-          evalDefault = config.flake.lib.evalComponent { inherit inputs; } defaultComponent;
-        in
-        {
-          checks.core-default = pkgs.runCommandLocal "core-default-check" { } ''
-            : ${builtins.seq evalDefault.config "ok"}
-            touch $out
-          '';
-        };
+      perSystem = config.flake.lib.mkComponentCheck {
+        name = "nixology-core-default";
+        component = with inputs.self.components; nixology.core.default;
+        inherit config;
+      };
     };
 in
 {
