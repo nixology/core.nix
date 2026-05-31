@@ -103,17 +103,18 @@ let
                 description = "The fully resolved component module including dependencies.";
                 apply =
                   _:
-                  assert rootConfig.flakeref != null;
-                  {
-                    key =
-                      "${rootConfig.flakeref}#components.${domain}.${subdomain}.${config.meta.name}"
-                      + optionalString (config.meta.version != null) ".${config.meta.version}";
+                  lib.throwIfNot (rootConfig.flakeref != null)
+                    "nixology: `flakeref` must be set before components can be used. Add `flakeref = \"github:your-org/your-repo\";` to your flake module."
+                    {
+                      key =
+                        "${rootConfig.flakeref}#components.${domain}.${subdomain}.${config.meta.name}"
+                        + optionalString (config.meta.version != null) ".${config.meta.version}";
 
-                    imports = [ config.implementation ] ++ map (dependency: dependency.module) config.dependencies;
+                      imports = [ config.implementation ] ++ map (dependency: dependency.module) config.dependencies;
 
-                    _class = "flake";
-                    _file = "${moduleLocation}#components.${domain}.${subdomain}.${config.meta.name}";
-                  };
+                      _class = "flake";
+                      _file = "${moduleLocation}#components.${domain}.${subdomain}.${config.meta.name}";
+                    };
               };
             };
 
