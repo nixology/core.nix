@@ -67,7 +67,13 @@ let
       perSystem = config.flake.lib.mkComponentCheck {
         name = "nixology-core-pkgs";
         component = with inputs.self.components; nixology.core.pkgs;
-        extraChecks = ({ eval, ... }: [ eval.config.pkgs.settings.allowUnfree ]);
+        extraChecks = (
+          { eval, ... }:
+          [
+            eval.config.pkgs.settings.allowUnfree
+            eval.config.pkgs.nixpkgs
+          ]
+        );
         inherit config;
       };
     };

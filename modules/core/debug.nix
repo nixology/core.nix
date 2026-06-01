@@ -89,7 +89,8 @@ let
       perSystem = config.flake.lib.mkComponentCheck {
         name = "nixology-core-debug";
         component = with inputs.self.components; nixology.core.debug;
-        extraChecks = ({ evalComponent, component, ... }:
+        extraChecks = (
+          { evalComponent, component, ... }:
           let
             evalEnabled = evalComponent {
               module = {
@@ -100,7 +101,12 @@ let
               };
             };
           in
-          [ evalEnabled.config ]);
+          [
+            evalEnabled.config
+            evalEnabled.config.allSystems
+            evalEnabled.config.debug
+          ]
+        );
         inherit config;
       };
     };

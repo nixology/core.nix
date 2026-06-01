@@ -80,7 +80,7 @@ let
         else
           [ ];
 
-      forFlake =
+      metadataForFlakeInput =
         self:
         let
           lock = builtins.fromJSON (builtins.readFile "${self.outPath}/flake.lock");
@@ -110,19 +110,15 @@ let
               builtins.substring 1 (builtins.stringLength ref' - 1) ref'
             else
               ref';
-
-          metadataForInput = input: {
-            pname = inputName input;
-            inherit input;
-            src = input;
-            ref = ref input;
-            rev = rev input;
-            url = url input;
-            version = version input;
-          };
         in
-        {
-          inherit metadataForInput;
+        input: {
+          pname = inputName input;
+          inherit input;
+          src = input;
+          ref = ref input;
+          rev = rev input;
+          url = url input;
+          version = version input;
         };
 
       mkComponentCheck =
@@ -152,7 +148,7 @@ let
       inherit
         evalComponent
         evalFlakeModule
-        forFlake
+        metadataForFlakeInput
         mkComponentCheck
         mkFlake
         mkTOMLFlake
@@ -188,10 +184,15 @@ let
       perSystem = config.flake.lib.mkComponentCheck {
         name = "nixology-core-lib";
         component = with inputs.self.components; nixology.core.lib;
-        extraChecks = ({ eval, ... }: [
-          eval.config.flake.lib.mkFlake
-          eval.config.flake.schemas.lib
-        ]);
+        extraChecks = (
+          { eval, ... }:
+          [
+            eval.config.flake.lib.mkFlake
+            eval.config.flake.schemas.lib
+            eval.config.flake.lib.metadataForFlakeInput
+            (eval.config.flake.lib.metadataForFlakeInput inputs.self inputs.flake-parts)
+          ]
+        );
         inherit config;
       };
     };

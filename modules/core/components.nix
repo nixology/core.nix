@@ -191,6 +191,7 @@ let
       perSystem = config.flake.lib.mkComponentCheck {
         name = "nixology-core-components";
         component = with inputs.self.components; nixology.core.components;
+        extraChecks = ({ eval, ... }: [ eval.config.flake.components ]);
         inherit config;
       };
     };

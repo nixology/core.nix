@@ -16,6 +16,7 @@ let
       perSystem = config.flake.lib.mkComponentCheck {
         name = "nixology-core-flakeref";
         component = with inputs.self.components; nixology.core.flakeref;
+        extraChecks = ({ eval, ... }: [ eval.config.flakeref ]);
         inherit config;
       };
     };

@@ -8,6 +8,7 @@ let
       perSystem = config.flake.lib.mkComponentCheck {
         name = "nixology-core-default";
         component = with inputs.self.components; nixology.core.default;
+        extraChecks = ({ eval, ... }: [ eval.config.flakeref ]);
         inherit config;
       };
     };

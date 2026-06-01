@@ -14,6 +14,7 @@ let
       perSystem = config.flake.lib.mkComponentCheck {
         name = "nixology-core-transposition";
         component = with inputs.self.components; nixology.core.transposition;
+        extraChecks = ({ eval, ... }: [ eval.config.transposition ]);
         inherit config;
       };
     };

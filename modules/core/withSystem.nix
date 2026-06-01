@@ -12,6 +12,23 @@ let
       perSystem = config.flake.lib.mkComponentCheck {
         name = "nixology-core-withSystem";
         component = with inputs.self.components; nixology.core.withSystem;
+        extraChecks = (
+          { evalComponent, component, ... }:
+          let
+            evalWithDebug = evalComponent {
+              module = {
+                imports = [
+                  inputs.self.components.nixology.core.debug.module
+                  { debug = true; }
+                  component.module
+                ];
+              };
+            };
+          in
+          [
+            evalWithDebug._module.args.withSystem
+          ]
+        );
         inherit config;
       };
     };
