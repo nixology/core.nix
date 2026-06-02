@@ -17,12 +17,29 @@ jobs:
       pull-requests: write
 
     steps:
+      - name: Check for workflow file changes
+        id: workflow-changes
+        run: |
+          files=$(gh pr diff --name-only "$PR_NUMBER" --repo "$GITHUB_REPOSITORY")
+          if echo "$files" | grep -q '^\.github/workflows/'; then
+            echo "Workflow files were modified — skipping auto-merge for safety."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+
       - name: Fetch dependabot metadata
         id: fetch-dependabot-metadata
+        if: steps.workflow-changes.outputs.skip != 'true'
         uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3
 
       - name: Enable auto-merge for Nix flake updates
-        if: ${{steps.fetch-dependabot-metadata.outputs.package-ecosystem == 'nix'}}
+        if: >
+          steps.workflow-changes.outputs.skip != 'true' &&
+          steps.fetch-dependabot-metadata.outputs.package-ecosystem == 'nix'
         run: gh pr merge --repo "$GITHUB_REPOSITORY" --auto --rebase --delete-branch "$PR_NUMBER"
         env:
           GITHUB_TOKEN: ${{ github.token }}
