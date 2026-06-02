@@ -20,19 +20,6 @@ let
           self ? inputs.self,
           moduleLocation ? "${self.outPath}/flake.nix",
         }:
-        let
-          inputsPos = builtins.unsafeGetAttrPos "inputs" args;
-
-          errorLocation =
-            args.moduleLocation or (
-              if inputsPos != null then
-                inputsPos.file
-              else if args ? inputs.self.outPath then
-                args.inputs.self.outPath + "/flake.nix"
-              else
-                "<mkFlake argument>"
-            );
-        in
         module:
         lib.evalModules {
           class = "flake";
@@ -44,7 +31,7 @@ let
           // specialArgs;
 
           modules = [
-            (lib.setDefaultModuleLocation errorLocation module)
+            (lib.setDefaultModuleLocation moduleLocation module)
           ]
           ++ lib.optionals (extraConfig != null) [
             coreInputs.self.components.nixology.core.default.module

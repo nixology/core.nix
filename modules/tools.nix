@@ -15,6 +15,55 @@ let
 
       perSystem =
         { lib, pkgs, ... }:
+        let
+          yamlfmtConfig = pkgs.writeText ".yamlfmt.yaml" ''
+            formatter:
+              type: basic
+              retain_line_breaks: true
+              trim_trailing_whitespace: true
+          '';
+
+          treefmtConfig = pkgs.writeText "treefmt.toml" ''
+            [formatter.deadnix]
+            command = "deadnix"
+            includes = [
+              "**/*.nix",
+            ]
+
+            [formatter.just]
+            command = "just"
+            options = ["--fmt", "--unstable", "--justfile"]
+            includes = [
+              "justfile",
+              "Justfile",
+              "**/justfile",
+              "**/Justfile",
+            ]
+
+            [formatter.nixfmt]
+            command = "nixfmt"
+            includes = [
+              "**/*.nix",
+            ]
+
+            [formatter.yamlfmt]
+            command = "yamlfmt"
+            options = ["-conf", "${yamlfmtConfig}"]
+            includes = [
+              "**/*.yml",
+              "**/*.yaml",
+            ]
+
+            [formatter.zizmor]
+            command = "zizmor"
+            includes = [
+              ".github/workflows/*.yml",
+              ".github/workflows/*.yaml",
+              ".github/actions/**/*.yml",
+              ".github/actions/**/*.yaml",
+            ]
+          '';
+        in
         {
           formatter = pkgs.writeShellApplication {
             name = "formatter";
@@ -29,57 +78,7 @@ let
             ];
 
             text = ''
-              TMPDIR=$(mktemp -d)
-
-              cat > "$TMPDIR/.yamlfmt.yaml" <<EOF
-              formatter:
-                type: basic
-                retain_line_breaks: true
-                trim_trailing_whitespace: true
-              EOF
-
-              cat > "$TMPDIR/treefmt.toml" <<EOF
-              [formatter.deadnix]
-              command = "deadnix"
-              includes = [
-                "**/*.nix",
-              ]
-
-              [formatter.just]
-              command = "just"
-              options = ["--fmt", "--unstable", "--justfile"]
-              includes = [
-                "justfile",
-                "Justfile",
-                "**/justfile",
-                "**/Justfile",
-              ]
-
-              [formatter.nixfmt]
-              command = "nixfmt"
-              includes = [
-                "**/*.nix",
-              ]
-
-              [formatter.yamlfmt]
-              command = "yamlfmt"
-              options = ["-conf", "$TMPDIR/.yamlfmt.yaml"]
-              includes = [
-                "**/*.yml",
-                "**/*.yaml",
-              ]
-
-              [formatter.zizmor]
-              command = "zizmor"
-              includes = [
-                ".github/workflows/*.yml",
-                ".github/workflows/*.yaml",
-                ".github/actions/**/*.yml",
-                ".github/actions/**/*.yaml",
-              ]
-              EOF
-
-              treefmt --tree-root "$PWD" --config-file "$TMPDIR/treefmt.toml"
+              treefmt --tree-root "$PWD" --config-file "${treefmtConfig}"
             '';
           };
         };
