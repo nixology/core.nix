@@ -10,9 +10,15 @@ let
         type = lib.types.submodule {
           options = {
             nixpkgs = lib.mkOption {
-              type = lib.types.path;
-              default = inputs.nixpkgs;
+              type = lib.types.nullOr lib.types.path;
+              default = if inputs ? nixpkgs then inputs.nixpkgs else null;
               description = "The nixpkgs source to import.";
+              apply = value: (lib.throwIf (value == null) ''
+                nixology: `pkgs.nixpkgs` is not set.
+
+                Either set `pkgs.nixpkgs` explicitly, or ensure your flake has
+                a `nixpkgs` input (e.g. `inputs.nixpkgs.url = "github:nixos/nixpkgs";`).
+              '') value;
             };
 
             settings = lib.mkOption {
