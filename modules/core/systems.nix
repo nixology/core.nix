@@ -20,7 +20,7 @@ let
           if variant == "default" then
             lib.mkOptionDefault (import extraInputs.${variant})
           else
-            lib.mkForce (import extraInputs.${variant});
+            import extraInputs.${variant};
       };
     in
     {
