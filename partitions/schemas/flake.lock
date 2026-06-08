@@ -2,11 +2,11 @@
   "nodes": {
     "flake-schemas": {
       "locked": {
-        "lastModified": 1780084615,
-        "narHash": "sha256-/qKIgQWTystjbQilErpOCALPqpNW0L87ZCrE/epU05A=",
+        "lastModified": 1780327564,
+        "narHash": "sha256-HiRPtA0spK+Dkgbhz/1zW9glXxNVB+L4Rj2VYmdawb8=",
         "owner": "DeterminateSystems",
         "repo": "flake-schemas",
-        "rev": "c84b109dd04882f8d815712e7de969013e30cdf7",
+        "rev": "6cc9bd98891b1fc6bb2b8cb3277df8bc72799ca6",
         "type": "github"
       },
       "original": {
