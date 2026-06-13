@@ -12,6 +12,13 @@ let
     let
       coreInputs = inputs;
 
+      getFileName = pos:
+        let
+          fileName = builtins.baseNameOf pos.file;
+          match = builtins.match "(.+)\\.[^.]+$" fileName;
+        in
+          if match == null then fileName else builtins.head match;
+
       evalFlakeModule =
         extraConfig:
         args@{
@@ -133,6 +140,7 @@ let
     in
     {
       inherit
+        getFileName
         evalComponent
         evalFlakeModule
         metadataForFlakeInput
