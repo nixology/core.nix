@@ -13,7 +13,7 @@ let
     implementation.perSystem =
       { system, ... }:
       let
-        inherit (config.partitions.channels.extraInputs.${variant}.inputs) nixpkgs;
+        nixpkgs = config.partitions.channels.extraInputs.${variant}.inputs.channel;
       in
       {
         _module.args.pkgs = nixpkgs.legacyPackages.${system};
