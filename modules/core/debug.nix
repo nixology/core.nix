@@ -31,7 +31,9 @@ let
         "${inputs.flake-parts}/modules/debug.nix"
       ];
 
-      config = lib.mkIf config.debug {
+      config = {
+        debug = true;
+
         flake.schemas = {
           allSystems =
             mkSchema
