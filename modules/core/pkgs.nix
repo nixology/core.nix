@@ -1,48 +1,53 @@
-{ inputs, ... }:
+local@{ ... }:
 let
   implementation =
-    { config, lib, ... }:
+    module@{ ... }:
+    with local.lib;
+    with types;
     {
-      options.pkgs = lib.mkOption {
+      options.pkgs = mkOption {
         description = "The package set configuration for the `pkgs` module argument.";
         default = { };
 
-        type = lib.types.submodule {
+        type = submodule {
           options = {
-            nixpkgs = lib.mkOption {
-              type = lib.types.nullOr lib.types.path;
-              default = if inputs ? nixpkgs then inputs.nixpkgs else null;
+            nixpkgs = mkOption {
+              type = nullOr path;
+              default = if local.inputs ? nixpkgs then local.inputs.nixpkgs else null;
               description = "The nixpkgs source to import.";
-              apply = value: (lib.throwIf (value == null) ''
-                nixology: `pkgs.nixpkgs` is not set.
+              apply =
+                value:
+                (throwIf (value == null) ''
+                  nixology: `pkgs.nixpkgs` is not set.
 
-                Either set `pkgs.nixpkgs` explicitly, or ensure your flake has
-                a `nixpkgs` input (e.g. `inputs.nixpkgs.url = "github:nixos/nixpkgs";`).
-              '') value;
+                  Either set `pkgs.nixpkgs` explicitly, or ensure your flake has
+                  a `nixpkgs` input (e.g. `inputs.nixpkgs.url = "github:nixos/nixpkgs";`).
+                '')
+                  value;
             };
 
-            settings = lib.mkOption {
-              type = lib.types.submodule {
-                freeformType = lib.types.lazyAttrsOf lib.types.anything;
+            settings = mkOption {
+              type = submodule {
+                freeformType = lazyAttrsOf anything;
 
                 options = {
-                  allowAliases = lib.mkOption {
-                    type = lib.types.bool;
+                  allowAliases = mkOption {
+                    type = bool;
                     default = true;
                   };
 
-                  allowBroken = lib.mkOption {
-                    type = lib.types.bool;
+                  allowBroken = mkOption {
+                    type = bool;
                     default = false;
                   };
 
-                  allowUnfree = lib.mkOption {
-                    type = lib.types.bool;
+                  allowUnfree = mkOption {
+                    type = bool;
                     default = false;
                   };
 
-                  allowUnfreePackages = lib.mkOption {
-                    type = lib.types.listOf lib.types.str;
+                  allowUnfreePackages = mkOption {
+                    type = listOf str;
                     default = [ ];
                   };
                 };
@@ -58,31 +63,33 @@ let
       config.perSystem =
         { system, ... }:
         {
-          _module.args.pkgs = lib.mkOptionDefault (
-            import config.pkgs.nixpkgs {
+          _module.args.pkgs = mkOptionDefault (
+            import module.config.pkgs.nixpkgs {
               inherit system;
-              config = config.pkgs.settings;
+              config = module.config.pkgs.settings;
             }
           );
         };
     };
 
   check =
-    { config, ... }:
+    module@{ ... }:
     {
-      perSystem = config.flake.lib.mkComponentCheck {
+      perSystem = local.config.flake.lib.mkComponentCheck {
         name = "nixology-core-pkgs";
-        component = with inputs.self.components; nixology.core.pkgs;
-        extraChecks = (
-          { eval, ... }:
-          [
-            eval.config.pkgs.settings.allowUnfree
-            eval.config.pkgs.nixpkgs
-          ]
-        );
-        inherit config;
+        component = with local.inputs.self.components; nixology.core.pkgs;
+        inherit extraChecks;
+        inherit (module) config;
       };
     };
+
+  extraChecks = (
+    { eval, ... }:
+    [
+      eval.config.pkgs.settings.allowUnfree
+      eval.config.pkgs.nixpkgs
+    ]
+  );
 in
 {
   imports = [
@@ -94,7 +101,7 @@ in
     nixology.core.pkgs = {
       inherit implementation;
 
-      dependencies = with inputs.self.components; [
+      dependencies = with local.inputs.self.components; [
         nixology.core.perSystem
       ];
 

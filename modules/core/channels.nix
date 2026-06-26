@@ -1,4 +1,4 @@
-{ config, lib, ... }:
+local@{ ... }:
 let
   variants = [
     "nixos"
@@ -13,7 +13,7 @@ let
     implementation.perSystem =
       { system, ... }:
       let
-        nixpkgs = config.partitions.channels.extraInputs.${variant}.inputs.channel;
+        nixpkgs = local.config.partitions.channels.extraInputs.${variant}.inputs.channel;
       in
       {
         _module.args.pkgs = nixpkgs.legacyPackages.${system};
@@ -31,6 +31,6 @@ let
 in
 {
   flake.components = {
-    nixology.channels = lib.genAttrs variants mkChannelComponent;
+    nixology.channels = local.lib.genAttrs variants mkChannelComponent;
   };
 }

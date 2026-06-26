@@ -1,13 +1,8 @@
-{
-  config,
-  inputs,
-  lib,
-  ...
-}:
+local@{ ... }:
 let
   implementation =
     let
-      inherit (config.partitions.schemas.extraInputs.flake-schemas.lib) mkChildren;
+      inherit (local.config.partitions.schemas.extraInputs.flake-schemas.lib) mkChildren;
 
       version = 1;
 
@@ -25,16 +20,17 @@ let
         debugging convenience.
       '';
     in
-    { config, ... }:
     {
       imports = [
-        "${inputs.flake-parts}/modules/debug.nix"
+        "${local.inputs.flake-parts}/modules/debug.nix"
       ];
 
       config = {
         debug = true;
 
-        flake.schemas = {
+        flake.schemas = { inherit (local.config.flake.exportedSchemas) allSystems debug currentSystem; };
+
+        flake.exportedSchemas = {
           allSystems =
             mkSchema
               ''
@@ -86,32 +82,34 @@ let
     };
 
   check =
-    { config, ... }:
+    module@{ ... }:
     {
-      perSystem = config.flake.lib.mkComponentCheck {
+      perSystem = local.config.flake.lib.mkComponentCheck {
         name = "nixology-core-debug";
-        component = with inputs.self.components; nixology.core.debug;
-        extraChecks = (
-          { evalComponent, component, ... }:
-          let
-            evalEnabled = evalComponent {
-              module = {
-                imports = [
-                  { debug = true; }
-                  component.module
-                ];
-              };
-            };
-          in
-          [
-            evalEnabled.config
-            evalEnabled.config.allSystems
-            evalEnabled.config.debug
-          ]
-        );
-        inherit config;
+        component = with local.inputs.self.components; nixology.core.debug;
+        inherit extraChecks;
+        inherit (module) config;
       };
     };
+
+  extraChecks = (
+    { evalComponent, component, ... }:
+    let
+      evalEnabled = evalComponent {
+        module = {
+          imports = [
+            { debug = true; }
+            component.module
+          ];
+        };
+      };
+    in
+    [
+      evalEnabled.config
+      evalEnabled.config.allSystems
+      evalEnabled.config.debug
+    ]
+  );
 in
 {
   imports = [
@@ -123,7 +121,7 @@ in
     nixology.core.debug = {
       inherit implementation;
 
-      dependencies = with inputs.self.components; [
+      dependencies = with local.inputs.self.components; [
         nixology.core.flake
         nixology.core.perSystem
         nixology.core.schemas

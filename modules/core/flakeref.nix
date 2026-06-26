@@ -1,23 +1,24 @@
-{ inputs, ... }:
+local@{ ... }:
 let
   implementation =
-    { lib, ... }:
+    with local.lib;
+    with types;
     {
-      options.flakeref = lib.mkOption {
-        type = lib.types.nullOr lib.types.str;
+      options.flakeref = mkOption {
+        type = nullOr str;
         default = null;
         description = "The flake reference for this flake.";
       };
     };
 
   check =
-    { config, ... }:
+    module@{ ... }:
     {
-      perSystem = config.flake.lib.mkComponentCheck {
+      perSystem = local.config.flake.lib.mkComponentCheck {
         name = "nixology-core-flakeref";
-        component = with inputs.self.components; nixology.core.flakeref;
+        component = with local.inputs.self.components; nixology.core.flakeref;
         extraChecks = ({ eval, ... }: [ eval.config.flakeref ]);
-        inherit config;
+        inherit (module) config;
       };
     };
 in

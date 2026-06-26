@@ -1,14 +1,14 @@
-{ inputs, ... }:
+local@{ ... }:
 let
-  implementation = inputs.flake-parts.flakeModules.partitions;
+  implementation = local.inputs.flake-parts.flakeModules.partitions;
 
   check =
-    { config, ... }:
+    module@{ ... }:
     {
-      perSystem = config.flake.lib.mkComponentCheck {
+      perSystem = local.config.flake.lib.mkComponentCheck {
         name = "nixology-core-partitions";
-        component = with inputs.self.components; nixology.core.partitions;
-        inherit config;
+        component = with local.inputs.self.components; nixology.core.partitions;
+        inherit (module) config;
       };
     };
 in
@@ -22,7 +22,7 @@ in
     nixology.core.partitions = {
       inherit implementation;
 
-      dependencies = with inputs.self.components; [
+      dependencies = with local.inputs.self.components; [
         nixology.core.flake
       ];
 

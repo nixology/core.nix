@@ -1,21 +1,21 @@
-{ inputs, lib, ... }:
+local@{ ... }:
 let
   implementation = {
     imports = [
-      "${inputs.flake-parts}/modules/transposition.nix"
+      "${local.inputs.flake-parts}/modules/transposition.nix"
     ];
 
-    transposition = lib.mkOptionDefault { };
+    transposition = local.lib.mkOptionDefault { };
   };
 
   check =
-    { config, ... }:
+    module@{ ... }:
     {
-      perSystem = config.flake.lib.mkComponentCheck {
+      perSystem = local.config.flake.lib.mkComponentCheck {
         name = "nixology-core-transposition";
-        component = with inputs.self.components; nixology.core.transposition;
+        component = with local.inputs.self.components; nixology.core.transposition;
         extraChecks = ({ eval, ... }: [ eval.config.transposition ]);
-        inherit config;
+        inherit (module) config;
       };
     };
 in
@@ -29,7 +29,7 @@ in
     nixology.core.transposition = {
       inherit implementation;
 
-      dependencies = with inputs.self.components; [
+      dependencies = with local.inputs.self.components; [
         nixology.core.flake
         nixology.core.perSystem
       ];

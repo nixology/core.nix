@@ -1,18 +1,18 @@
-{ inputs, ... }:
+local@{ ... }:
 let
   implementation = {
     imports = [
-      "${inputs.flake-parts}/modules/perSystem.nix"
+      "${local.inputs.flake-parts}/modules/perSystem.nix"
     ];
   };
 
   check =
-    { config, ... }:
+    module@{ ... }:
     {
-      perSystem = config.flake.lib.mkComponentCheck {
+      perSystem = local.config.flake.lib.mkComponentCheck {
         name = "nixology-core-perSystem";
-        component = with inputs.self.components; nixology.core.perSystem;
-        inherit config;
+        component = with local.inputs.self.components; nixology.core.perSystem;
+        inherit (module) config;
       };
     };
 in

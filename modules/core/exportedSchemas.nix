@@ -6,14 +6,14 @@ let
     with local.lib;
     with types;
     {
-      options.flake.schemas = mkOption {
+      options.flake.exportedSchemas = mkOption {
         type = lazyAttrsOf (lazyAttrsOf anything);
         default = { };
-        description = "Schemas for flake output types.";
+        description = "Schemas for other flakes to use.";
       };
 
       config.flake.schemas = {
-        inherit (flake-schemas.exportedSchemas) schemas;
+        inherit (flake-schemas.exportedSchemas) exportedSchemas;
       };
     };
 
@@ -21,9 +21,9 @@ let
     module@{ ... }:
     {
       perSystem = local.config.flake.lib.mkComponentCheck {
-        name = "nixology-core-schemas";
-        component = with local.inputs.self.components; nixology.core.schemas;
-        extraChecks = ({ eval, ... }: [ eval.config.flake.schemas.schemas ]);
+        name = "nixology-core-exportedSchemas";
+        component = with local.inputs.self.components; nixology.core.exportedSchemas;
+        extraChecks = ({ eval, ... }: [ eval.config.flake.schemas.exportedSchemas ]);
         inherit (module) config;
       };
     };
@@ -35,7 +35,7 @@ in
   ];
 
   flake.components = {
-    nixology.core.schemas = {
+    nixology.core.exportedSchemas = {
       inherit implementation;
 
       dependencies = with local.inputs.self.components; [
@@ -43,8 +43,8 @@ in
       ];
 
       meta = {
-        description = "Provide flake schemas support and expose the flake-schemas schema.";
-        shortDescription = "flake schemas";
+        description = "Used to define flake schemas that you\nintend for other flakes to use.";
+        shortDescription = "exported flake schemas";
       };
     };
   };

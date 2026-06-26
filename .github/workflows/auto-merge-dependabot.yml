@@ -38,8 +38,7 @@ jobs:
 
       - name: Enable auto-merge for Nix flake updates
         if: >
-          steps.workflow-changes.outputs.skip != 'true' &&
-          steps.fetch-dependabot-metadata.outputs.package-ecosystem == 'nix'
+          steps.workflow-changes.outputs.skip != 'true' && steps.fetch-dependabot-metadata.outputs.package-ecosystem == 'nix'
         run: gh pr merge --repo "$GITHUB_REPOSITORY" --auto --rebase --delete-branch "$PR_NUMBER"
         env:
           GITHUB_TOKEN: ${{ github.token }}

@@ -1,15 +1,13 @@
-{ config, inputs, ... }:
+local@{ ... }:
 let
-  inherit (config.partitions.schemas.extraInputs) flake-schemas;
+  inherit (local.config.partitions.schemas.extraInputs) flake-schemas;
 
-  moduleLocation = "${inputs.self.outPath}/flake.nix";
-
-  rootConfig = config;
+  moduleLocation = "${local.inputs.self.outPath}/flake.nix";
 
   implementation =
-    { config, lib, ... }:
+    module@{ ... }:
     let
-      inherit (lib)
+      inherit (module.lib)
         isAttrs
         mapAttrs
         mkDefault
@@ -44,7 +42,7 @@ let
       componentType =
         { domain, subdomain }:
         submodule (
-          { name, config, ... }:
+          args@{ name, ... }:
           {
             options = {
               dependencies = mkOption {
@@ -58,7 +56,7 @@ let
                   options = {
                     name = mkOption {
                       type = nonEmptyStr;
-                      default = name;
+                      default = args.name;
                       description = "The name of the component.";
                     };
 
@@ -103,23 +101,26 @@ let
                 description = "The fully resolved component module including dependencies.";
                 apply =
                   _:
-                  lib.throwIfNot (rootConfig.flakeref != null)
+                  local.lib.throwIfNot (local.config.flakeref != null)
                     "nixology: `flakeref` must be set before components can be used. Add `flakeref = \"github:your-org/your-repo\";` to your flake module."
                     {
                       key =
-                        "${rootConfig.flakeref}#components.${domain}.${subdomain}.${config.meta.name}"
-                        + optionalString (config.meta.version != null) ".${config.meta.version}";
+                        "${local.config.flakeref}#components.${domain}.${subdomain}.${args.config.meta.name}"
+                        + optionalString (args.config.meta.version != null) ".${args.config.meta.version}";
 
-                      imports = [ config.implementation ] ++ map (dependency: dependency.module) config.dependencies;
+                      imports = [
+                        args.config.implementation
+                      ]
+                      ++ map (dependency: dependency.module) args.config.dependencies;
 
                       _class = "flake";
-                      _file = "${moduleLocation}#components.${domain}.${subdomain}.${config.meta.name}";
+                      _file = "${moduleLocation}#components.${domain}.${subdomain}.${args.config.meta.name}";
                     };
               };
             };
 
             config = {
-              meta.name = mkDefault name;
+              meta.name = mkDefault args.name;
             };
           }
         );
@@ -127,19 +128,19 @@ let
       subdomainType =
         domain:
         submodule (
-          { name, ... }:
+          args@{ name, ... }:
           {
             freeformType = lazyAttrsOf (componentType {
               inherit domain;
-              subdomain = name;
+              subdomain = args.name;
             });
           }
         );
 
       domainType = submodule (
-        { name, ... }:
+        args@{ name, ... }:
         {
-          freeformType = lazyAttrsOf (subdomainType name);
+          freeformType = lazyAttrsOf (subdomainType args.name);
         }
       );
     in
@@ -186,13 +187,13 @@ let
     };
 
   check =
-    { config, ... }:
+    module@{ ... }:
     {
-      perSystem = config.flake.lib.mkComponentCheck {
+      perSystem = local.config.flake.lib.mkComponentCheck {
         name = "nixology-core-components";
-        component = with inputs.self.components; nixology.core.components;
+        component = with local.inputs.self.components; nixology.core.components;
         extraChecks = ({ eval, ... }: [ eval.config.flake.components ]);
-        inherit config;
+        inherit (module) config;
       };
     };
 in
@@ -206,7 +207,7 @@ in
     nixology.core.components = {
       inherit implementation;
 
-      dependencies = with inputs.self.components; [
+      dependencies = with local.inputs.self.components; [
         nixology.core.schemas
       ];
 

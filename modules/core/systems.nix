@@ -1,6 +1,6 @@
-{ config, lib, ... }:
+local@{ ... }:
 let
-  extraInputs = config.partitions.systems.extraInputs;
+  extraInputs = local.config.partitions.systems.extraInputs;
 
   variants = [
     "default"
@@ -18,7 +18,7 @@ let
       implementation = {
         systems =
           if variant == "default" then
-            lib.mkOptionDefault (import extraInputs.${variant})
+            local.lib.mkOptionDefault (import extraInputs.${variant})
           else
             import extraInputs.${variant};
       };

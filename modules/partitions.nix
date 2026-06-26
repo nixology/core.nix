@@ -1,4 +1,3 @@
-{ inputs, ... }:
 let
   partitions = [
     "channels"

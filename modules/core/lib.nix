@@ -1,23 +1,21 @@
-{
+local@{
   config ? null,
-  inputs,
-  lib ? inputs.flake-parts.inputs.nixpkgs-lib.lib,
+  lib ? local.inputs.flake-parts.inputs.nixpkgs-lib.lib,
   ...
 }:
 let
   inherit (config.partitions.schemas.extraInputs) flake-schemas;
-  flake-parts-lib = inputs.flake-parts.lib;
+  flake-parts-lib = local.inputs.flake-parts.lib;
 
   library =
     let
-      coreInputs = inputs;
-
-      getFileName = pos:
+      getFileName =
+        pos:
         let
           fileName = builtins.baseNameOf pos.file;
           match = builtins.match "(.+)\\.[^.]+$" fileName;
         in
-          if match == null then fileName else builtins.head match;
+        if match == null then fileName else builtins.head match;
 
       evalFlakeModule =
         extraConfig:
@@ -41,7 +39,7 @@ let
             (lib.setDefaultModuleLocation moduleLocation module)
           ]
           ++ lib.optionals (extraConfig != null) [
-            coreInputs.self.components.nixology.core.default.module
+            local.inputs.self.components.nixology.core.default.module
           ];
         };
 
@@ -124,7 +122,7 @@ let
         }:
         { pkgs, lib, ... }:
         let
-          evalFn = c: config.flake.lib.evalComponent { inputs = coreInputs; } c;
+          evalFn = c: config.flake.lib.evalComponent { inherit (local) inputs; } c;
           eval = evalFn component;
           extra = extraChecks {
             evalComponent = evalFn;
@@ -178,14 +176,14 @@ let
     {
       perSystem = config.flake.lib.mkComponentCheck {
         name = "nixology-core-lib";
-        component = with inputs.self.components; nixology.core.lib;
+        component = with local.inputs.self.components; nixology.core.lib;
         extraChecks = (
           { eval, ... }:
           [
             eval.config.flake.lib.mkFlake
             eval.config.flake.schemas.lib
             eval.config.flake.lib.metadataForFlakeInput
-            (eval.config.flake.lib.metadataForFlakeInput inputs.self inputs.flake-parts)
+            (eval.config.flake.lib.metadataForFlakeInput local.inputs.self local.inputs.flake-parts)
           ]
         );
         inherit config;
@@ -203,7 +201,7 @@ in
     nixology.core.lib = {
       inherit implementation;
 
-      dependencies = with inputs.self.components; [
+      dependencies = with local.inputs.self.components; [
         nixology.core.schemas
       ];
 

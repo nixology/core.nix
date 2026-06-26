@@ -1,11 +1,11 @@
-{ config, inputs, ... }:
+local@{ ... }:
 let
-  inherit (config.partitions.schemas.extraInputs) flake-schemas;
+  inherit (local.config.partitions.schemas.extraInputs) flake-schemas;
 
   module = {
     imports = [
-      "${inputs.flake-parts}/modules/checks.nix"
-      "${inputs.flake-parts}/modules/formatter.nix"
+      "${local.inputs.flake-parts}/modules/checks.nix"
+      "${local.inputs.flake-parts}/modules/formatter.nix"
     ];
 
     config = {
@@ -14,7 +14,7 @@ let
       };
 
       perSystem =
-        { lib, pkgs, ... }:
+        { pkgs, ... }:
         let
           yamlfmtConfig = pkgs.writeText ".yamlfmt.yaml" ''
             formatter:
