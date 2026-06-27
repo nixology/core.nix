@@ -77,28 +77,19 @@ let
     module@{ ... }:
     {
       perSystem = local.config.flake.lib.mkComponentCheck {
-        name = "nixology-core-debugSchemas";
-        component = with local.inputs.self.components; nixology.core.debugSchemas;
+        name = "nixology-schemas-debug";
+        component = with local.inputs.self.components; nixology.schemas.debug;
         inherit extraChecks;
         inherit (module) config;
       };
     };
 
   extraChecks = (
-    { evalComponent, component, ... }:
-    let
-      evalEnabled = evalComponent {
-        module = {
-          imports = [
-            component.module
-          ];
-        };
-      };
-    in
+    { eval, ... }:
     [
-      evalEnabled.config.flake.exportedSchemas.allSystems
-      evalEnabled.config.flake.exportedSchemas.currentSystem
-      evalEnabled.config.flake.exportedSchemas.debug
+      eval.config.flake.exportedSchemas.allSystems
+      eval.config.flake.exportedSchemas.currentSystem
+      eval.config.flake.exportedSchemas.debug
     ]
   );
 in
@@ -109,7 +100,7 @@ in
   ];
 
   flake.components = {
-    nixology.core.debugSchemas = {
+    nixology.schemas.debug = {
       inherit implementation;
 
       dependencies = with local.inputs.self.components; [

@@ -46,8 +46,8 @@ let
     module@{ ... }:
     {
       perSystem = local.config.flake.lib.mkComponentCheck {
-        name = "nixology-core-componentsSchemas";
-        component = with local.inputs.self.components; nixology.core.componentsSchemas;
+        name = "nixology-schemas-components";
+        component = with local.inputs.self.components; nixology.schemas.components;
         extraChecks = ({ eval, ... }: [ eval.config.flake.exportedSchemas.components ]);
         inherit (module) config;
       };
@@ -60,7 +60,7 @@ in
   ];
 
   flake.components = {
-    nixology.core.componentsSchemas = {
+    nixology.schemas.components = {
       inherit implementation;
 
       dependencies = with local.inputs.self.components; [

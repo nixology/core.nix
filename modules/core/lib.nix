@@ -4,7 +4,6 @@ local@{
   ...
 }:
 let
-  inherit (config.partitions.schemas.extraInputs) flake-schemas;
   flake-parts-lib = local.inputs.flake-parts.lib;
 
   library =
@@ -149,26 +148,9 @@ let
         ;
     };
 
-  schema = {
-    version = 1;
-    doc = ''
-      The `lib` flake output provides a collection of functions.
-    '';
-    inventory =
-      let
-        inherit (flake-schemas.lib) mkChildren;
-      in
-      output:
-      mkChildren (
-        builtins.mapAttrs (_name: value: {
-          what = if builtins.isFunction value then "library function" else "library value";
-        }) output
-      );
-  };
-
   implementation = {
     flake.lib = lib.mkDefault library;
-    flake.schemas.lib = schema;
+    flake.schemas = { inherit (local.config.flake.exportedSchemas) lib; };
   };
 
   check =
@@ -181,7 +163,6 @@ let
           { eval, ... }:
           [
             eval.config.flake.lib.mkFlake
-            eval.config.flake.schemas.lib
             eval.config.flake.lib.metadataForFlakeInput
             (eval.config.flake.lib.metadataForFlakeInput local.inputs.self local.inputs.flake-parts)
           ]
@@ -191,11 +172,13 @@ let
     };
 in
 {
-  imports = [ check ];
+  imports = [
+    check
+    { flake.schemas = { inherit (local.config.flake.exportedSchemas) lib; }; }
+  ];
 
   # implementation
   flake.lib = library;
-  flake.schemas.lib = schema;
 
   flake.components = {
     nixology.core.lib = {
