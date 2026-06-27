@@ -39,7 +39,7 @@ in
       inherit implementation;
 
       dependencies = with local.inputs.self.components; [
-        nixology.core.flake
+        nixology.core.schemas
       ];
 
       meta = {

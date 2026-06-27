@@ -7,7 +7,7 @@ This repository exports:
 | Output | Purpose |
 | --- | --- |
 | `lib` | Helper functions such as `mkFlake`, `evalFlakeModule`, `evalComponent`, `mkTOMLFlake`, and `modulesIn` |
-| `components.nixology.core.*` | Core components like `default`, `flake`, `perSystem`, `withSystem`, `systems`, `pkgs`, `partitions`, `lib`, and `pkgs-unfree` |
+| `components.nixology.core.*` | Core components like `default`, `flake`, `perSystem`, `withSystem`, `systems`, `pkgs`, `partitions`, `lib`, and `pkgsUnfree` |
 | `components.nixology.channels.*` | `pkgs` providers backed by Nix channel tarballs |
 | `components.nixology.branches.*` | `pkgs` providers backed by `github:nixos/nixpkgs` refs |
 | `components.nixology.systems.*` | Predefined system sets such as `default`, `default-darwin`, `default-linux`, `aarch64-linux`, and `x86_64-darwin` |
@@ -45,7 +45,7 @@ Core integration with `flake-parts`, including:
 - `default`: base components for Nixology flakes
 - `flake`, `perSystem`, `withSystem`, `moduleWithSystem`, `transposition`: `flake-parts` integration points
 - `pkgs`: default package set
-- `pkgs-unfree`: enables unfree packages in `pkgs`
+- `pkgsUnfree`: enables unfree packages in `pkgs`
 - `systems`: default system set
 - `partitions`: partition support
 - `components`: component schema and dependency resolution

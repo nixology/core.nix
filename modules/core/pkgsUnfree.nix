@@ -8,8 +8,8 @@ let
     module@{ ... }:
     {
       perSystem = local.config.flake.lib.mkComponentCheck {
-        name = "nixology-core-pkgs-unfree";
-        component = with local.inputs.self.components; nixology.core.pkgs-unfree;
+        name = "nixology-core-pkgsUnfree";
+        component = with local.inputs.self.components; nixology.core.pkgsUnfree;
         extraChecks = ({ eval, ... }: [ eval.config.pkgs.settings.allowUnfree ]);
         inherit (module) config;
       };
@@ -19,7 +19,7 @@ in
   imports = [ check ];
 
   flake.components = {
-    nixology.core.pkgs-unfree = {
+    nixology.core.pkgsUnfree = {
       inherit implementation;
 
       dependencies = with local.inputs.self.components; [
