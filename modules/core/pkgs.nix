@@ -106,8 +106,8 @@ in
       ];
 
       meta = {
-        description = "Provide the default nixpkgs package set as the per-system `pkgs` module argument.";
-        shortDescription = "provide per-system pkgs";
+        description = "Configurable per-system `pkgs` module argument.";
+        shortDescription = "configurable per-system pkgs";
       };
     };
   };

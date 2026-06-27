@@ -43,8 +43,8 @@ in
       ];
 
       meta = {
-        description = "Used to define flake schemas that you\nintend for other flakes to use.";
-        shortDescription = "exported flake schemas";
+        description = "Flake schemas exported for other flakes to use.";
+        shortDescription = "flake schemas exported for other flakes to use";
       };
     };
   };

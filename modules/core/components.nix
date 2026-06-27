@@ -9,7 +9,6 @@ let
     let
       inherit (module.lib)
         isAttrs
-        mapAttrs
         mkDefault
         mkOption
         optionalString
@@ -151,39 +150,7 @@ let
         description = "A set of reusable components.";
       };
 
-      config.flake.schemas.components = {
-        version = 1;
-        doc = "The `components` flake output provides importable components.";
-
-        inventory =
-          let
-            inherit (flake-schemas.lib) mkChildren;
-
-            recurse =
-              attrs:
-              mapAttrs (
-                _: value:
-                if isAttrs value && value ? module then
-                  {
-                    what =
-                      if value.meta.shortDescription != null then
-                        "component (${value.meta.shortDescription})"
-                      else
-                        "component";
-                  }
-                else
-                  {
-                    children = recurse value;
-                  }
-              ) attrs;
-          in
-          output:
-          mkChildren (
-            mapAttrs (_: value: {
-              children = recurse value;
-            }) output
-          );
-      };
+      config.flake.schemas = { inherit (local.config.flake.exportedSchemas) components; };
     };
 
   check =

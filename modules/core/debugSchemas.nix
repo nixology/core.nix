@@ -117,8 +117,8 @@ in
       ];
 
       meta = {
-        description = "Exported schemas for debugging flake-parts";
-        shortDescription = "exported schemas for debugging flake-parts";
+        description = "Exported schemas for flake-parts debug attributes";
+        shortDescription = "exported schemas for flake-parts debug attributes";
       };
     };
   };

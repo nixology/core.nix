@@ -43,8 +43,8 @@ in
       ];
 
       meta = {
-        description = "Provide flake schemas support and expose the flake-schemas schema.";
-        shortDescription = "flake schemas";
+        description = "Flake schemas used by this flake.";
+        shortDescription = "flake schemas used by this flake";
       };
     };
   };
