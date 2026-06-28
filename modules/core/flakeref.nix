@@ -1,15 +1,22 @@
 local@{ ... }:
 let
-  implementation =
-    with local.lib;
-    with types;
-    {
-      options.flakeref = mkOption {
-        type = nullOr str;
-        default = null;
-        description = "The flake reference for this flake.";
-      };
+  inherit (local.lib)
+    mkOption
+    types
+    ;
+
+  inherit (types)
+    nullOr
+    str
+    ;
+
+  implementation = {
+    options.flakeref = mkOption {
+      type = nullOr str;
+      default = null;
+      description = "The flake reference for this flake.";
     };
+  };
 
   check =
     module@{ ... }:

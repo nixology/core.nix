@@ -1,21 +1,28 @@
 local@{ ... }:
 let
+  inherit (local.lib)
+    mkOption
+    types
+    ;
+
+  inherit (types)
+    anything
+    lazyAttrsOf
+    ;
+
   inherit (local.config.partitions.schemas.extraInputs) flake-schemas;
 
-  implementation =
-    with local.lib;
-    with types;
-    {
-      options.flake.schemas = mkOption {
-        type = lazyAttrsOf (lazyAttrsOf anything);
-        default = { };
-        description = "Schemas for flake output types.";
-      };
-
-      config.flake.schemas = {
-        inherit (flake-schemas.exportedSchemas) schemas;
-      };
+  implementation = {
+    options.flake.schemas = mkOption {
+      type = lazyAttrsOf (lazyAttrsOf anything);
+      default = { };
+      description = "Schemas for flake output types.";
     };
+
+    config.flake.schemas = {
+      inherit (flake-schemas.exportedSchemas) schemas;
+    };
+  };
 
   check =
     module@{ ... }:

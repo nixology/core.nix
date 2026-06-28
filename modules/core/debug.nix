@@ -1,6 +1,10 @@
 local@{ ... }:
 let
-  implementation = with local.lib; {
+  inherit (local.lib)
+    mkDefault
+    ;
+
+  implementation = {
     imports = [
       "${local.inputs.flake-parts}/modules/debug.nix"
     ];

@@ -21,14 +21,13 @@ let
                   name: value:
                   if builtins.isAttrs value then
                     recurse value
-                  else
-                    if builtins.isFunction value then
+                  else if builtins.isFunction value then
                     {
                       what = "library function";
                       # Make `nix flake check` enforce our naming convention.
-                      evalChecks.camelCase = builtins.match "^[a-z][a-zA-Z]*$" name == [];
+                      evalChecks.camelCase = builtins.match "^[a-z][a-zA-Z]*$" name == [ ];
                     }
-                    else
+                  else
                     {
                       what = "library value";
                     }

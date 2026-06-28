@@ -4,6 +4,34 @@ local@{
   ...
 }:
 let
+  inherit (lib)
+    concatLines
+    evalModules
+    filesystem
+    filter
+    getAttrFromPath
+    lists
+    mkDefault
+    optionals
+    setDefaultModuleLocation
+    strings
+    ;
+
+  inherit (filesystem)
+    pathIsDirectory
+    listFilesRecursive
+    ;
+
+  inherit (lists)
+    head
+    last
+    ;
+
+  inherit (strings)
+    hasSuffix
+    splitString
+    ;
+
   flake-parts-lib = local.inputs.flake-parts.lib;
 
   library =
@@ -25,7 +53,7 @@ let
           moduleLocation ? "${self.outPath}/flake.nix",
         }:
         module:
-        lib.evalModules {
+        evalModules {
           class = "flake";
 
           specialArgs = {
@@ -35,9 +63,9 @@ let
           // specialArgs;
 
           modules = [
-            (lib.setDefaultModuleLocation moduleLocation module)
+            (setDefaultModuleLocation moduleLocation module)
           ]
-          ++ lib.optionals (extraConfig != null) [
+          ++ optionals (extraConfig != null) [
             local.inputs.self.components.nixology.core.default.module
           ];
         };
@@ -50,13 +78,13 @@ let
         flakeArgs: tomlFile:
         let
           toml = builtins.fromTOML (builtins.readFile tomlFile);
-          source = lib.lists.head toml.sources;
+          source = head toml.sources;
 
-          name = lib.lists.last (lib.strings.splitString "/" source.url);
-          componentName = lib.lists.head source.components;
+          name = last (splitString "/" source.url);
+          componentName = head source.components;
 
-          componentPath = lib.strings.splitString "." "${name}.components.${componentName}";
-          module = lib.getAttrFromPath componentPath flakeArgs.inputs;
+          componentPath = splitString "." "${name}.components.${componentName}";
+          module = getAttrFromPath componentPath flakeArgs.inputs;
 
           args = flakeArgs // {
             inherit (toml.flake) flakeref;
@@ -66,8 +94,8 @@ let
 
       modulesIn =
         directory:
-        if lib.filesystem.pathIsDirectory directory then
-          lib.filter (path: lib.strings.hasSuffix ".nix" path) (lib.filesystem.listFilesRecursive directory)
+        if pathIsDirectory directory then
+          filter (path: hasSuffix ".nix" path) (listFilesRecursive directory)
         else
           [ ];
 
@@ -119,9 +147,9 @@ let
           extraChecks ? _: [ ],
           config,
         }:
-        { pkgs, lib, ... }:
+        { pkgs, ... }:
         let
-          evalFn = c: config.flake.lib.evalComponent { inherit (local) inputs; } c;
+          evalFn = c: evalComponent { inherit (local) inputs; } c;
           eval = evalFn component;
           extra = extraChecks {
             evalComponent = evalFn;
@@ -131,7 +159,7 @@ let
         in
         {
           checks.${name} = pkgs.runCommandLocal "${name}-check" { } (
-            lib.concatLines ([ (seqLine eval.config) ] ++ map seqLine extra ++ [ "touch $out" ])
+            concatLines ([ (seqLine eval.config) ] ++ map seqLine extra ++ [ "touch $out" ])
           );
         };
     in
@@ -149,7 +177,7 @@ let
     };
 
   implementation = {
-    flake.lib = lib.mkDefault library;
+    flake.lib = mkDefault library;
     flake.schemas = { inherit (local.config.flake.exportedSchemas) lib; };
   };
 

@@ -1,9 +1,25 @@
 local@{ ... }:
 let
+  inherit (local.lib)
+    mkOption
+    mkOptionDefault
+    throwIf
+    types
+    ;
+
+  inherit (types)
+    anything
+    bool
+    lazyAttrsOf
+    listOf
+    nullOr
+    path
+    str
+    submodule
+    ;
+
   implementation =
     module@{ ... }:
-    with local.lib;
-    with types;
     {
       options.pkgs = mkOption {
         description = "The package set configuration for the `pkgs` module argument.";

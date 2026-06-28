@@ -1,32 +1,30 @@
 local@{ ... }:
 let
-  inherit (local.config.partitions.schemas.extraInputs) flake-schemas;
+  inherit (local.lib)
+    isAttrs
+    mkDefault
+    mkOption
+    optionalString
+    types
+    ;
+
+  inherit (types)
+    addCheck
+    deferredModule
+    lazyAttrsOf
+    listOf
+    nonEmptyStr
+    nullOr
+    raw
+    submodule
+    unique
+    ;
 
   moduleLocation = "${local.inputs.self.outPath}/flake.nix";
 
   implementation =
     module@{ ... }:
     let
-      inherit (module.lib)
-        isAttrs
-        mkDefault
-        mkOption
-        optionalString
-        types
-        ;
-
-      inherit (types)
-        addCheck
-        deferredModule
-        lazyAttrsOf
-        listOf
-        nonEmptyStr
-        nullOr
-        raw
-        submodule
-        unique
-        ;
-
       undeclaredMetaMessage = ''
         No option has been declared for this attribute, so its definitions can't be merged automatically.
         Possible solutions:
