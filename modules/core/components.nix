@@ -1,5 +1,7 @@
 local@{ ... }:
 let
+  inherit (local.inputs.self.components) nixology;
+
   inherit (local.lib)
     isAttrs
     mkDefault
@@ -156,7 +158,7 @@ let
     {
       perSystem = local.config.flake.lib.mkComponentCheck {
         name = "nixology-core-components";
-        component = with local.inputs.self.components; nixology.core.components;
+        component = nixology.core.components;
         extraChecks = ({ eval, ... }: [ eval.config.flake.components ]);
         inherit (module) config;
       };
@@ -172,7 +174,7 @@ in
     nixology.core.components = {
       inherit implementation;
 
-      dependencies = with local.inputs.self.components; [
+      dependencies = [
         nixology.core.schemas
       ];
 

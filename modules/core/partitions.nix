@@ -1,5 +1,7 @@
 local@{ ... }:
 let
+  inherit (local.inputs.self.components) nixology;
+
   implementation = local.inputs.flake-parts.flakeModules.partitions;
 
   check =
@@ -7,7 +9,7 @@ let
     {
       perSystem = local.config.flake.lib.mkComponentCheck {
         name = "nixology-core-partitions";
-        component = with local.inputs.self.components; nixology.core.partitions;
+        component = nixology.core.partitions;
         inherit (module) config;
       };
     };
@@ -22,7 +24,7 @@ in
     nixology.core.partitions = {
       inherit implementation;
 
-      dependencies = with local.inputs.self.components; [
+      dependencies = [
         nixology.core.flake
       ];
 

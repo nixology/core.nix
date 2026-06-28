@@ -1,5 +1,7 @@
 local@{ ... }:
 let
+  inherit (local.inputs.self.components) nixology;
+
   inherit (local.lib)
     mkOption
     types
@@ -23,7 +25,7 @@ let
     {
       perSystem = local.config.flake.lib.mkComponentCheck {
         name = "nixology-core-flakeref";
-        component = with local.inputs.self.components; nixology.core.flakeref;
+        component = nixology.core.flakeref;
         extraChecks = ({ eval, ... }: [ eval.config.flakeref ]);
         inherit (module) config;
       };

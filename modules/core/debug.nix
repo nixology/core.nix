@@ -1,5 +1,7 @@
 local@{ ... }:
 let
+  inherit (local.inputs.self.components) nixology;
+
   inherit (local.lib)
     mkDefault
     ;
@@ -20,7 +22,7 @@ let
     {
       perSystem = local.config.flake.lib.mkComponentCheck {
         name = "nixology-core-debug";
-        component = with local.inputs.self.components; nixology.core.debug;
+        component = nixology.core.debug;
         inherit extraChecks;
         inherit (module) config;
       };
@@ -54,7 +56,7 @@ in
     nixology.core.debug = {
       inherit implementation;
 
-      dependencies = with local.inputs.self.components; [
+      dependencies = [
         nixology.core.perSystem
         nixology.core.schemas
       ];

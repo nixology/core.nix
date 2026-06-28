@@ -1,5 +1,7 @@
 local@{ ... }:
 let
+  inherit (local.inputs.self.components) nixology;
+
   implementation = {
     pkgs.settings.allowUnfree = true;
   };
@@ -9,7 +11,7 @@ let
     {
       perSystem = local.config.flake.lib.mkComponentCheck {
         name = "nixology-core-pkgsUnfree";
-        component = with local.inputs.self.components; nixology.core.pkgsUnfree;
+        component = nixology.core.pkgsUnfree;
         extraChecks = ({ eval, ... }: [ eval.config.pkgs.settings.allowUnfree ]);
         inherit (module) config;
       };
@@ -22,7 +24,7 @@ in
     nixology.core.pkgsUnfree = {
       inherit implementation;
 
-      dependencies = with local.inputs.self.components; [
+      dependencies = [
         nixology.core.pkgs
       ];
 

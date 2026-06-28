@@ -1,11 +1,13 @@
 local@{ ... }:
 let
+  inherit (local.inputs.self.components) nixology;
+
   check =
     module@{ ... }:
     {
       perSystem = local.config.flake.lib.mkComponentCheck {
         name = "nixology-core-default";
-        component = with local.inputs.self.components; nixology.core.default;
+        component = nixology.core.default;
         extraChecks = ({ eval, ... }: [ eval.config.flakeref ]);
         inherit (module) config;
       };
@@ -20,7 +22,7 @@ in
     nixology.core.default = {
       implementation = { };
 
-      dependencies = with local.inputs.self.components; [
+      dependencies = [
         nixology.core.flake
         nixology.core.flakeref
         nixology.core.moduleWithSystem

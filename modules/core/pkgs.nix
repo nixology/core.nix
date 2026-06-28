@@ -1,5 +1,7 @@
 local@{ ... }:
 let
+  inherit (local.inputs.self.components) nixology;
+
   inherit (local.lib)
     mkOption
     mkOptionDefault
@@ -93,7 +95,7 @@ let
     {
       perSystem = local.config.flake.lib.mkComponentCheck {
         name = "nixology-core-pkgs";
-        component = with local.inputs.self.components; nixology.core.pkgs;
+        component = nixology.core.pkgs;
         inherit extraChecks;
         inherit (module) config;
       };
@@ -117,7 +119,7 @@ in
     nixology.core.pkgs = {
       inherit implementation;
 
-      dependencies = with local.inputs.self.components; [
+      dependencies = [
         nixology.core.perSystem
       ];
 

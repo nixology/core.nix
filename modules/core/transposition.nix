@@ -1,5 +1,7 @@
 local@{ ... }:
 let
+  inherit (local.inputs.self.components) nixology;
+
   implementation = {
     imports = [
       "${local.inputs.flake-parts}/modules/transposition.nix"
@@ -13,7 +15,7 @@ let
     {
       perSystem = local.config.flake.lib.mkComponentCheck {
         name = "nixology-core-transposition";
-        component = with local.inputs.self.components; nixology.core.transposition;
+        component = nixology.core.transposition;
         extraChecks = ({ eval, ... }: [ eval.config.transposition ]);
         inherit (module) config;
       };
@@ -29,7 +31,7 @@ in
     nixology.core.transposition = {
       inherit implementation;
 
-      dependencies = with local.inputs.self.components; [
+      dependencies = [
         nixology.core.flake
         nixology.core.perSystem
       ];

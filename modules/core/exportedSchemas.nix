@@ -1,5 +1,7 @@
 local@{ ... }:
 let
+  inherit (local.inputs.self.components) nixology;
+
   inherit (local.lib)
     mkOption
     types
@@ -29,7 +31,7 @@ let
     {
       perSystem = local.config.flake.lib.mkComponentCheck {
         name = "nixology-core-exportedSchemas";
-        component = with local.inputs.self.components; nixology.core.exportedSchemas;
+        component = nixology.core.exportedSchemas;
         extraChecks = ({ eval, ... }: [ eval.config.flake.schemas.exportedSchemas ]);
         inherit (module) config;
       };
@@ -45,7 +47,7 @@ in
     nixology.core.exportedSchemas = {
       inherit implementation;
 
-      dependencies = with local.inputs.self.components; [
+      dependencies = [
         nixology.core.schemas
       ];
 

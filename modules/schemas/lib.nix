@@ -1,6 +1,9 @@
 local@{ ... }:
 let
+  inherit (local.inputs.self.components) nixology;
+
   inherit (local.config.partitions.schemas.extraInputs) flake-schemas;
+
   inherit (flake-schemas.lib) mkChildren;
 
   implementation = {
@@ -44,7 +47,7 @@ let
     {
       perSystem = local.config.flake.lib.mkComponentCheck {
         name = "nixology-schemas-lib";
-        component = with local.inputs.self.components; nixology.schemas.lib;
+        component = nixology.schemas.lib;
         extraChecks = { eval, ... }: [ eval.config.flake.exportedSchemas.lib ];
         inherit (module) config;
       };
@@ -60,7 +63,7 @@ in
     nixology.schemas.lib = {
       inherit implementation;
 
-      dependencies = with local.inputs.self.components; [
+      dependencies = [
         nixology.core.exportedSchemas
       ];
 

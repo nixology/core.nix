@@ -1,5 +1,7 @@
 local@{ ... }:
 let
+  inherit (local.inputs.self.components) nixology;
+
   implementation = {
     imports = [
       "${local.inputs.flake-parts}/modules/flake.nix"
@@ -11,7 +13,7 @@ let
     {
       perSystem = local.config.flake.lib.mkComponentCheck {
         name = "nixology-core-flake";
-        component = with local.inputs.self.components; nixology.core.flake;
+        component = nixology.core.flake;
         inherit (module) config;
       };
     };

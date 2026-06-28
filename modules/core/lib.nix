@@ -4,6 +4,8 @@ local@{
   ...
 }:
 let
+  inherit (local.inputs.self.components) nixology;
+
   inherit (lib)
     concatLines
     evalModules
@@ -186,7 +188,7 @@ let
     {
       perSystem = config.flake.lib.mkComponentCheck {
         name = "nixology-core-lib";
-        component = with local.inputs.self.components; nixology.core.lib;
+        component = nixology.core.lib;
         extraChecks = (
           { eval, ... }:
           [
@@ -212,7 +214,7 @@ in
     nixology.core.lib = {
       inherit implementation;
 
-      dependencies = with local.inputs.self.components; [
+      dependencies = [
         nixology.core.schemas
       ];
 
