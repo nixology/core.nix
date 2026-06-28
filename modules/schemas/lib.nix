@@ -1,24 +1,41 @@
 local@{ ... }:
 let
   inherit (local.config.partitions.schemas.extraInputs) flake-schemas;
+  inherit (flake-schemas.lib) mkChildren;
 
   implementation = {
     flake.exportedSchemas = {
       lib = {
         version = 1;
+
         doc = ''
           The lib flake output provides a collection of functions.
         '';
+
         inventory =
           let
-            inherit (flake-schemas.lib) mkChildren;
+            recurse =
+              library:
+              mkChildren (
+                builtins.mapAttrs (
+                  name: value:
+                  if builtins.isAttrs value then
+                    recurse value
+                  else
+                    if builtins.isFunction value then
+                    {
+                      what = "library function";
+                      # Make `nix flake check` enforce our naming convention.
+                      evalChecks.camelCase = builtins.match "^[a-z][a-zA-Z]*$" name == [];
+                    }
+                    else
+                    {
+                      what = "library value";
+                    }
+                ) library
+              );
           in
-          output:
-          mkChildren (
-            builtins.mapAttrs (_name: value: {
-              what = if builtins.isFunction value then "library function" else "library value";
-            }) output
-          );
+          recurse;
       };
     };
   };

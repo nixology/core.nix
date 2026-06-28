@@ -1,42 +1,37 @@
 local@{ ... }:
 let
   inherit (local.config.partitions.schemas.extraInputs) flake-schemas;
+  inherit (flake-schemas.lib) mkChildren;
 
   implementation = with local.lib; {
     config = {
       flake.exportedSchemas = {
         components = {
           version = 1;
+
           doc = "The `components` flake output provides importable components.";
 
           inventory =
             let
-              inherit (flake-schemas.lib) mkChildren;
-
               recurse =
-                attrs:
-                mapAttrs (
-                  _: value:
-                  if isAttrs value && value ? module then
-                    {
-                      what =
-                        if value.meta.shortDescription != null then
-                          "component (${value.meta.shortDescription})"
-                        else
-                          "component";
-                    }
-                  else
-                    {
-                      children = recurse value;
-                    }
-                ) attrs;
+                components:
+                mkChildren (
+                  mapAttrs (
+                    name: value:
+                    if isAttrs value && value ? module then
+                      {
+                        what =
+                          if value.meta.shortDescription != null then
+                            "component (${value.meta.shortDescription})"
+                          else
+                            "component attribute";
+                      }
+                    else
+                      recurse value
+                  ) components
+                );
             in
-            output:
-            mkChildren (
-              mapAttrs (_: value: {
-                children = recurse value;
-              }) output
-            );
+            recurse;
         };
       };
     };

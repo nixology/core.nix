@@ -36,11 +36,11 @@ let
                 debugging convenience.
               ''
               (
-                output:
+                configs:
                 mkChildren (
-                  builtins.mapAttrs (_name: _value: {
-                    what = "perSystem flake-parts configuration";
-                  }) output
+                  builtins.mapAttrs (system: config: {
+                    what = "flake-parts perSystem config";
+                  }) configs
                 )
               );
 
@@ -51,8 +51,8 @@ let
 
                 Only available in impure mode.
               ''
-              (output: {
-                what = "perSystem flake-parts configuration for ${output.allModuleArgs.system}";
+              (config: {
+                what = "flake-parts perSystem config for ${config.allModuleArgs.system}";
               });
 
           debug =
@@ -66,8 +66,8 @@ let
                 N.B. these are not part of the `config` parameter, but are merged in for
                 debugging convenience.
               ''
-              (_output: {
-                what = "top-level flake-parts configuration";
+              (config: {
+                what = "flake-parts top-level configuration";
               });
         };
       };

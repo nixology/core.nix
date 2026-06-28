@@ -10,7 +10,7 @@ let
 
     config = {
       flake.schemas = {
-        inherit (flake-schemas.schemas) checks formatter;
+        inherit (flake-schemas.exportedSchemas) checks formatter;
       };
 
       perSystem =
