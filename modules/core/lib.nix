@@ -211,7 +211,7 @@ in
     implementation
   ];
 
-  # implementation
+  # provide `flake.lib` attribute for core bootstrap import
   flake.lib = makeExtensible (final: library);
 
   flake.components = {
