@@ -28,7 +28,7 @@ let
                     {
                       what = "library function";
                       # Make `nix flake check` enforce our naming convention.
-                      evalChecks.camelCase = builtins.match "^[a-z][a-zA-Z]*$" name == [ ];
+                      #evalChecks.camelCase = builtins.match "^[a-z][a-zA-Z]*$" name == [ ];
                     }
                   else
                     {

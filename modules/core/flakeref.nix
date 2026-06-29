@@ -4,10 +4,9 @@ let
 
   inherit (local.lib)
     mkOption
-    types
     ;
 
-  inherit (types)
+  inherit (local.lib.types)
     nullOr
     str
     ;

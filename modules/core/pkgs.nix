@@ -6,10 +6,9 @@ let
     mkOption
     mkOptionDefault
     throwIf
-    types
     ;
 
-  inherit (types)
+  inherit (local.lib.types)
     anything
     bool
     lazyAttrsOf

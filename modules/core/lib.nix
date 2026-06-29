@@ -9,27 +9,25 @@ let
   inherit (lib)
     concatLines
     evalModules
-    filesystem
     filter
     getAttrFromPath
-    lists
+    makeExtensible
     mkDefault
     optionals
     setDefaultModuleLocation
-    strings
     ;
 
-  inherit (filesystem)
+  inherit (lib.filesystem)
     pathIsDirectory
     listFilesRecursive
     ;
 
-  inherit (lists)
+  inherit (lib.lists)
     head
     last
     ;
 
-  inherit (strings)
+  inherit (lib.strings)
     hasSuffix
     splitString
     ;
@@ -179,7 +177,7 @@ let
     };
 
   implementation = {
-    flake.lib = mkDefault library;
+    flake.lib = mkDefault (makeExtensible (final: library));
     flake.schemas = { inherit (local.config.flake.exportedSchemas) lib; };
   };
 
@@ -208,7 +206,7 @@ in
   ];
 
   # implementation
-  flake.lib = library;
+  flake.lib = makeExtensible (final: library);
 
   flake.components = {
     nixology.core.lib = {

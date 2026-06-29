@@ -7,10 +7,9 @@ let
     mkDefault
     mkOption
     optionalString
-    types
     ;
 
-  inherit (types)
+  inherit (local.lib.types)
     addCheck
     deferredModule
     lazyAttrsOf
