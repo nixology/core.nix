@@ -32,47 +32,38 @@ let
     splitString
     ;
 
-  flake-parts-lib = local.inputs.flake-parts.lib;
+  flake-parts-lib = import "${local.inputs.flake-parts}/lib.nix" {
+    inherit lib;
+    builtinModules = { };
+    extraModules = { };
+  };
+
+  inherit (flake-parts-lib)
+    evalFlakeModule
+    ;
 
   library =
     let
-      getFileName =
-        pos:
+      getFileStem =
+        filePath:
         let
-          fileName = builtins.baseNameOf pos.file;
-          match = builtins.match "(.+)\\.[^.]+$" fileName;
+          baseName = builtins.baseNameOf filePath;
+          stem = builtins.match "(.+)\\.[^.]+$" baseName;
         in
-        if match == null then fileName else builtins.head match;
+        if stem == null then baseName else builtins.head stem;
 
-      evalFlakeModule =
-        extraConfig:
-        args@{
-          inputs,
-          specialArgs ? { },
-          self ? inputs.self,
-          moduleLocation ? "${self.outPath}/flake.nix",
-        }:
-        module:
-        evalModules {
-          class = "flake";
+      modulesIn =
+        directory:
+        if pathIsDirectory directory then
+          filter (path: hasSuffix ".nix" path) (listFilesRecursive directory)
+        else
+          [ ];
 
-          specialArgs = {
-            inherit self flake-parts-lib;
-            inherit (args) inputs;
-          }
-          // specialArgs;
+      evalComponent = args: component: evalFlakeModule args component.module;
 
-          modules = [
-            (setDefaultModuleLocation moduleLocation module)
-          ]
-          ++ optionals (extraConfig != null) [
-            nixology.core.default.module
-          ];
-        };
-
-      evalComponent = args: component: evalFlakeModule null args component.module;
-
-      mkFlake = flakeArgs: flakeModule: (evalFlakeModule config flakeArgs flakeModule).config.processedFlake;
+      mkFlake = args: module: flake-parts-lib.mkFlake args {
+        imports = [ module ] ++ optionals (config != null) [ nixology.core.default.module ];
+      };
 
       mkTOMLFlake =
         flakeArgs: tomlFile:
@@ -92,22 +83,14 @@ let
         in
         mkFlake args module;
 
-      modulesIn =
-        directory:
-        if pathIsDirectory directory then
-          filter (path: hasSuffix ".nix" path) (listFilesRecursive directory)
-        else
-          [ ];
-
-      metadataForFlakeInput =
-        self:
+      metadataForFlakeInput = flake: input:
         let
-          lock = builtins.fromJSON (builtins.readFile "${self.outPath}/flake.lock");
+          lock = builtins.fromJSON (builtins.readFile "${flake.outPath}/flake.lock");
 
           inputName =
             input:
             builtins.head (
-              builtins.filter (name: self.inputs.${name} == input) (builtins.attrNames self.inputs)
+              builtins.filter (name: flake.inputs.${name} == input) (builtins.attrNames flake.inputs)
             );
 
           getNode = input: lock.nodes.${inputName input};
@@ -130,7 +113,7 @@ let
             else
               ref';
         in
-        input: {
+        {
           pname = inputName input;
           inherit input;
           src = input;
@@ -165,9 +148,8 @@ let
     in
     {
       inherit
-        getFileName
+        getFileStem
         evalComponent
-        evalFlakeModule
         metadataForFlakeInput
         mkComponentCheck
         mkFlake
