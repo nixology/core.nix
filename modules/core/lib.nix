@@ -66,13 +66,13 @@ let
             (setDefaultModuleLocation moduleLocation module)
           ]
           ++ optionals (extraConfig != null) [
-            local.inputs.self.components.nixology.core.default.module
+            nixology.core.default.module
           ];
         };
 
       evalComponent = args: component: evalFlakeModule null args component.module;
 
-      mkFlake = flakeArgs: flakeModule: (evalFlakeModule config flakeArgs flakeModule).config.flake;
+      mkFlake = flakeArgs: flakeModule: (evalFlakeModule config flakeArgs flakeModule).config.processedFlake;
 
       mkTOMLFlake =
         flakeArgs: tomlFile:
@@ -179,6 +179,12 @@ let
   implementation = {
     flake.lib = mkDefault (makeExtensible (final: library));
     flake.schemas = { inherit (local.config.flake.exportedSchemas) lib; };
+
+    touchup = {
+      # hide attributes added to lib when using makeExtensible
+      attr.lib.attr.__unfix__.enable = false;
+      attr.lib.attr.extend.enable = false;
+    };
   };
 
   check =
@@ -202,7 +208,7 @@ in
 {
   imports = [
     check
-    { flake.schemas = { inherit (local.config.flake.exportedSchemas) lib; }; }
+    implementation
   ];
 
   # implementation
@@ -214,6 +220,7 @@ in
 
       dependencies = [
         nixology.core.schemas
+        nixology.extra.touchup
       ];
 
       meta = {
