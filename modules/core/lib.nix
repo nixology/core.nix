@@ -52,6 +52,10 @@ let
         in
         if stem == null then baseName else builtins.head stem;
 
+      uses = { components ? [ ], ... }: {
+        imports = map (component: component.module) components;
+      };
+
       modulesIn =
         directory:
         if pathIsDirectory directory then
@@ -156,6 +160,29 @@ let
         mkTOMLFlake
         modulesIn
         ;
+      components = {
+        inherit
+          evalComponent
+          mkComponentCheck
+          uses
+          ;
+      };
+      flake = {
+        inherit
+          metadataForFlakeInput
+          mkFlake
+          mkTOMLFlake
+          ;
+      };
+      parts = {
+        inherit (flake-parts-lib)
+          defaultModule
+          evalFlakeModule
+          mkPerSystemOption
+          mkPerSystemType
+          mkTransposedPerSystemModule
+          ;
+      };
     };
 
   implementation = {
@@ -194,7 +221,7 @@ in
   ];
 
   # provide `flake.lib` attribute for core bootstrap import
-  flake.lib = makeExtensible (final: library);
+  flake.lib = library;
 
   flake.components = {
     nixology.core.lib = {
