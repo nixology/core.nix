@@ -192,7 +192,6 @@ let
     touchup = {
       # hide attributes added to lib when using makeExtensible
       attr.lib.attr.__unfix__.enable = false;
-      attr.lib.attr.extend.enable = false;
     };
   };
 
