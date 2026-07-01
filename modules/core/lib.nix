@@ -221,7 +221,9 @@ in
   ];
 
   # provide `flake.lib` attribute for core bootstrap import
-  flake.lib = library;
+  flake = {
+    ${if config == null then "lib" else null} = library;
+  };
 
   flake.components = {
     nixology.core.lib = {
