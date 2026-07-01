@@ -28,7 +28,6 @@ in
         nixology.core.moduleWithSystem
         nixology.core.perSystem
         nixology.core.pkgs
-        nixology.core.schemas
         nixology.core.transposition
         nixology.core.withSystem
         nixology.systems.default
