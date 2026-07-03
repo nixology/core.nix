@@ -8,6 +8,8 @@ let
     throwIf
     ;
 
+  inherit (local.lib.components) evalComponent;
+
   inherit (local.lib.types)
     anything
     bool
@@ -92,7 +94,6 @@ let
 
             checks =
               let
-                inherit (local.config.flake.lib) evalComponent;
                 inherit (evalComponent { inherit (module) inputs; } nixology.core.pkgs) config;
               in
               {

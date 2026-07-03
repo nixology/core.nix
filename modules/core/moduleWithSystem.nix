@@ -2,6 +2,8 @@
 let
   inherit (local.inputs.self.components) nixology;
 
+  inherit (local.lib.components) evalComponent;
+
   implementation =
     { ... }@module:
     {
@@ -13,7 +15,6 @@ let
         perSystem = { pkgs, ... }: {
           checks =
             let
-              inherit (local.config.flake.lib) evalComponent;
               inherit
                 (evalComponent { inherit (module) inputs; } {
                   module = {

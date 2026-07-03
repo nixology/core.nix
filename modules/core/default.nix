@@ -2,13 +2,14 @@
 let
   inherit (local.inputs.self.components) nixology;
 
+  inherit (local.lib.components) evalComponent;
+
   implementation =
     { ... }@module:
     {
       perSystem = { pkgs, ... }: {
         checks =
           let
-            inherit (local.config.flake.lib) evalComponent;
             inherit (evalComponent { inherit (module) inputs; } nixology.core.default) config;
           in
           {

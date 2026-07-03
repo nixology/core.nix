@@ -1,11 +1,13 @@
-local@{ ... }:
+{ ... }@local:
 let
+  inherit (local.inputs) flake-parts;
+
   inherit (local.config.partitions.schemas.extraInputs) flake-schemas;
 
   module = {
     imports = [
-      "${local.inputs.flake-parts}/modules/checks.nix"
-      "${local.inputs.flake-parts}/modules/formatter.nix"
+      "${flake-parts}/modules/checks.nix"
+      "${flake-parts}/modules/formatter.nix"
     ];
 
     config = {

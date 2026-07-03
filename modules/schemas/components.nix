@@ -7,6 +7,8 @@ let
     mapAttrs
     ;
 
+  inherit (local.lib.components) evalComponent;
+
   inherit (local.config.partitions.schemas.extraInputs) flake-schemas;
 
   inherit (flake-schemas.lib) mkChildren;
@@ -48,7 +50,6 @@ let
         perSystem = { pkgs, ... }: {
           checks =
             let
-              inherit (local.config.flake.lib) evalComponent;
               inherit (evalComponent { inherit (module) inputs; } nixology.schemas.components) config;
             in
             {

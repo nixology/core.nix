@@ -6,6 +6,7 @@ let
     { ... }@module:
     let
       inherit (local.lib) mkOption;
+      inherit (local.lib.components) evalComponent;
       inherit (local.lib.types) nullOr str;
     in
     {
@@ -21,7 +22,6 @@ let
         perSystem = { pkgs, ... }: {
           checks =
             let
-              inherit (local.config.flake.lib) evalComponent;
               inherit (evalComponent { inherit (module) inputs; } nixology.core.flakeref) config;
             in
             {

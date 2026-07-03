@@ -2,6 +2,8 @@
 let
   inherit (local.inputs.self.components) nixology;
 
+  inherit (local.lib.components) evalComponent;
+
   implementation =
     { ... }@module:
     {
@@ -12,7 +14,6 @@ let
         {
           checks =
             let
-              inherit (local.config.flake.lib) evalComponent;
               inherit (evalComponent { inherit (module) inputs; } nixology.core.pkgsUnfree) config;
             in
             {

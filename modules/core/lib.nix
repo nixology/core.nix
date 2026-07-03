@@ -1,14 +1,12 @@
 {
   config ? null,
-  lib ? local.inputs.flake-parts.inputs.nixpkgs-lib.lib,
+  lib ? local.inputs.nixpkgs.lib,
   ...
 }@local:
 let
   inherit (local.inputs.self.components) nixology;
 
   inherit (lib)
-    concatLines
-    evalModules
     filter
     getAttrFromPath
     makeExtensible
@@ -16,6 +14,8 @@ let
     optionals
     setDefaultModuleLocation
     ;
+
+  inherit (lib.components) evalComponent;
 
   inherit (lib.filesystem)
     pathIsDirectory
@@ -33,7 +33,7 @@ let
     ;
 
   flake-parts-lib = import "${local.inputs.flake-parts}/lib.nix" {
-    inherit lib;
+    lib = lib.extend (final: prev: library);
     builtinModules = { };
     extraModules = { };
   };
@@ -177,15 +177,14 @@ let
       perSystem = { pkgs, ... }: {
         checks =
           let
-            inherit (local.config.flake.lib) evalComponent;
             inherit (evalComponent { inherit (module) inputs; } nixology.core.lib) config;
           in
           {
             nixology-core-lib = pkgs.runCommandLocal "checks" {
-              check_flake_lib_mkFlake = builtins.seq config.flake.lib.mkFlake "ok";
-              check_flake_lib_metadataForFlakeInput = builtins.seq config.flake.lib.metadataForFlakeInput "ok";
+              check_flake_lib_mkFlake = builtins.seq local.lib.flake.mkFlake "ok";
+              check_flake_lib_metadataForFlakeInput = builtins.seq local.lib.flake.metadataForFlakeInput "ok";
               check_flake_lib_metadataForFlakeInput_self_flake-parts =
-                (config.flake.lib.metadataForFlakeInput local.inputs.self local.inputs.flake-parts).pname;
+                (local.lib.flake.metadataForFlakeInput local.inputs.self local.inputs.flake-parts).pname;
             } "touch $out";
           };
       };

@@ -2,14 +2,11 @@
 let
   inherit (local.inputs.self.components) nixology;
 
-  inherit (local.lib)
-    mkOption
-    ;
+  inherit (local.lib) mkOption;
 
-  inherit (local.lib.types)
-    anything
-    lazyAttrsOf
-    ;
+  inherit (local.lib.components) evalComponent;
+
+  inherit (local.lib.types) anything lazyAttrsOf;
 
   inherit (local.config.partitions.schemas.extraInputs) flake-schemas;
 
@@ -32,7 +29,6 @@ let
         perSystem = { pkgs, ... }: {
           checks =
             let
-              inherit (local.config.flake.lib) evalComponent;
               inherit (evalComponent { inherit (module) inputs; } nixology.core.schemas) config;
             in
             {

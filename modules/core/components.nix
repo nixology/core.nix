@@ -11,6 +11,8 @@ let
         optionalString
         ;
 
+      inherit (local.lib.components) evalComponent;
+
       inherit (local.lib.types)
         addCheck
         deferredModule
@@ -190,8 +192,6 @@ let
         perSystem = { pkgs, ... }: {
           checks =
             let
-              inherit (local.config.flake.lib) evalComponent;
-
               configs = builtins.listToAttrs (
                 map ({ name, value }: {
                   inherit name;
