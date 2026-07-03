@@ -1,30 +1,31 @@
-local@{ ... }:
+{ ... }@local:
 let
   inherit (local.inputs.self.components) nixology;
 
-  inherit (local.lib)
-    isAttrs
-    mkDefault
-    mkOption
-    optionalString
-    ;
-
-  inherit (local.lib.types)
-    addCheck
-    deferredModule
-    lazyAttrsOf
-    listOf
-    nonEmptyStr
-    nullOr
-    raw
-    submodule
-    unique
-    ;
-
-  moduleLocation = "${local.inputs.self.outPath}/flake.nix";
-
   implementation =
-    module@{ ... }:
+    let
+      inherit (local.lib)
+        isAttrs
+        mkDefault
+        mkOption
+        optionalString
+        ;
+
+      inherit (local.lib.types)
+        addCheck
+        deferredModule
+        lazyAttrsOf
+        listOf
+        nonEmptyStr
+        nullOr
+        raw
+        submodule
+        unique
+        ;
+
+      moduleLocation = "${local.inputs.self.outPath}/flake.nix";
+    in
+    { ... }@module:
     let
       undeclaredMetaMessage = ''
         No option has been declared for this attribute, so its definitions can't be merged automatically.
@@ -35,12 +36,14 @@ let
           - Define the value only once, with a single definition in a single module
       '';
 
-      componentRefType = addCheck raw (value: isAttrs value && value ? module);
+      isComponent = value: isAttrs value && value ? module && value.module != null;
+
+      componentRefType = addCheck raw isComponent;
 
       componentType =
         { domain, subdomain }:
         submodule (
-          args@{ name, ... }:
+          { name, ... }@args:
           {
             options = {
               dependencies = mkOption {
@@ -126,7 +129,7 @@ let
       subdomainType =
         domain:
         submodule (
-          args@{ name, ... }:
+          { name, ... }@args:
           {
             freeformType = lazyAttrsOf (componentType {
               inherit domain;
@@ -136,36 +139,73 @@ let
         );
 
       domainType = submodule (
-        args@{ name, ... }:
+        { name, ... }@args:
         {
           freeformType = lazyAttrsOf (subdomainType args.name);
         }
       );
+
+      componentsFrom =
+        attrs:
+        builtins.concatLists (
+          builtins.attrValues (
+            builtins.mapAttrs (
+              _: value:
+              if builtins.isAttrs value then
+                (if isComponent value then [ value ] else componentsFrom value)
+              else
+                [ ]
+            ) attrs
+          )
+        );
     in
     {
-      options.flake.components = mkOption {
-        type = lazyAttrsOf domainType;
-        default = { };
-        description = "A set of reusable components.";
+      options = {
+        flake.components = mkOption {
+          type = lazyAttrsOf domainType;
+          default = { };
+          description = "A set of reusable components.";
+        };
       };
 
-      config.flake.schemas = { inherit (local.config.flake.exportedSchemas) components; };
-    };
+      config = {
+        flake.schemas = { inherit (local.config.flake.exportedSchemas) components; };
 
-  check =
-    module@{ ... }:
-    {
-      perSystem = local.config.flake.lib.mkComponentCheck {
-        name = "nixology-core-components";
-        component = nixology.core.components;
-        extraChecks = ({ eval, ... }: [ eval.config.flake.components ]);
-        inherit (module) config;
+        perSystem = { pkgs, ... }: {
+          checks =
+            let
+              inherit (local.config.flake.lib) evalComponent;
+
+              configs =
+                let
+                  componentsConfigs = map (component: (evalComponent { inherit (module) inputs; } component).config) (
+                    componentsFrom module.config.flake.components
+                  );
+                in
+                builtins.listToAttrs (
+                  builtins.genList (i: {
+                    name = "item-${toString i}";
+                    value = builtins.elemAt componentsConfigs i;
+                  }) (builtins.length componentsConfigs)
+                );
+
+              inherit (evalComponent { inherit (module) inputs; } nixology.core.components) config;
+            in
+            {
+              components = pkgs.runCommandLocal "checks" (builtins.mapAttrs (
+                _: config: builtins.seq config "ok"
+              ) configs) "touch $out";
+
+              nixology-core-components = pkgs.runCommandLocal "checks" {
+                check_flake_components = builtins.seq config.flake.components "ok";
+              } "touch $out";
+            };
+        };
       };
     };
 in
 {
   imports = [
-    check
     implementation
   ];
 
@@ -174,6 +214,7 @@ in
       inherit implementation;
 
       dependencies = [
+        nixology.core.perSystem
         nixology.core.schemas
       ];
 

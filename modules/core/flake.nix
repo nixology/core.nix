@@ -1,32 +1,42 @@
-local@{ ... }:
+{ ... }@local:
 let
   inherit (local.inputs.self.components) nixology;
 
-  implementation = {
-    imports = [
-      "${local.inputs.flake-parts}/modules/flake.nix"
-    ];
-  };
-
-  check =
-    module@{ ... }:
+  implementation =
+    { ... }@module:
     {
-      perSystem = local.config.flake.lib.mkComponentCheck {
-        name = "nixology-core-flake";
-        component = nixology.core.flake;
-        inherit (module) config;
+      imports = [
+        "${local.inputs.flake-parts}/modules/flake.nix"
+      ];
+
+      config = {
+        perSystem = { pkgs, ... }: {
+          checks =
+            let
+              inherit (local.config.flake.lib) evalComponent;
+              inherit (evalComponent { inherit (module) inputs; } nixology.core.flake) config;
+            in
+            {
+              nixology-core-flake = pkgs.runCommandLocal "checks" {
+                check_flake = builtins.seq config.flake "ok";
+              } "touch $out";
+            };
+        };
       };
     };
 in
 {
   imports = [
-    check
     implementation
   ];
 
   flake.components = {
     nixology.core.flake = {
       inherit implementation;
+
+      dependencies = [
+        nixology.core.perSystem
+      ];
 
       meta = {
         description = "Expose the upstream flake-parts flake module as a nixology component.";

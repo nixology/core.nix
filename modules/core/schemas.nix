@@ -1,4 +1,4 @@
-local@{ ... }:
+{ ... }@local:
 let
   inherit (local.inputs.self.components) nixology;
 
@@ -13,32 +13,39 @@ let
 
   inherit (local.config.partitions.schemas.extraInputs) flake-schemas;
 
-  implementation = {
-    options.flake.schemas = mkOption {
-      type = lazyAttrsOf (lazyAttrsOf anything);
-      default = { };
-      description = "Schemas for flake output types.";
-    };
-
-    config.flake.schemas = {
-      inherit (flake-schemas.exportedSchemas) schemas;
-    };
-  };
-
-  check =
-    module@{ ... }:
+  implementation =
+    { ... }@module:
     {
-      perSystem = local.config.flake.lib.mkComponentCheck {
-        name = "nixology-core-schemas";
-        component = nixology.core.schemas;
-        extraChecks = ({ eval, ... }: [ eval.config.flake.schemas.schemas ]);
-        inherit (module) config;
+      options = {
+        flake.schemas = mkOption {
+          type = lazyAttrsOf (lazyAttrsOf anything);
+          default = { };
+          description = "Schemas for flake output types.";
+        };
+      };
+
+      config = {
+        flake.schemas = {
+          inherit (flake-schemas.exportedSchemas) schemas;
+        };
+
+        perSystem = { pkgs, ... }: {
+          checks =
+            let
+              inherit (local.config.flake.lib) evalComponent;
+              inherit (evalComponent { inherit (module) inputs; } nixology.core.schemas) config;
+            in
+            {
+              nixology-core-schemas = pkgs.runCommandLocal "checks" {
+                check_flake_schemas_schemas = builtins.seq config.flake.schemas.schemas "ok";
+              } "touch $out";
+            };
+        };
       };
     };
 in
 {
   imports = [
-    check
     implementation
   ];
 

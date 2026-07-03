@@ -1,26 +1,32 @@
-local@{ ... }:
+{ ... }@local:
 let
   inherit (local.inputs.self.components) nixology;
 
-  check =
-    module@{ ... }:
+  implementation =
+    { ... }@module:
     {
-      perSystem = local.config.flake.lib.mkComponentCheck {
-        name = "nixology-core-default";
-        component = nixology.core.default;
-        extraChecks = ({ eval, ... }: [ eval.config.flakeref ]);
-        inherit (module) config;
+      perSystem = { pkgs, ... }: {
+        checks =
+          let
+            inherit (local.config.flake.lib) evalComponent;
+            inherit (evalComponent { inherit (module) inputs; } nixology.core.default) config;
+          in
+          {
+            nixology-core-default = pkgs.runCommandLocal "checks" {
+              check_flakeref = builtins.seq config.flakeref "ok";
+            } "touch $out";
+          };
       };
     };
 in
 {
   imports = [
-    check
+    implementation
   ];
 
   flake.components = {
     nixology.core.default = {
-      implementation = { };
+      inherit implementation;
 
       dependencies = [
         nixology.core.flake

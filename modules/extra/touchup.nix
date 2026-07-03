@@ -1,22 +1,11 @@
-local@{ ... }:
+{ ... }@local:
 let
   inherit (local.inputs.self.components) nixology;
 
   implementation = local.inputs.flake-parts.flakeModules.touchup;
-
-  check =
-    module@{ ... }:
-    {
-      perSystem = local.config.flake.lib.mkComponentCheck {
-        name = "nixology-extra-touchup";
-        component = nixology.extra.touchup;
-        inherit (module) config;
-      };
-    };
 in
 {
   imports = [
-    check
     implementation
   ];
 

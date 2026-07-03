@@ -1,8 +1,9 @@
-local@{ ... }:
+{ ... }@local:
 let
   inherit (local.inputs.self.components) nixology;
 
   implementation =
+    { ... }@module:
     let
       inherit (local.config.partitions.schemas.extraInputs.flake-schemas.lib) mkChildren;
 
@@ -72,32 +73,27 @@ let
                 what = "flake-parts top-level configuration";
               });
         };
+
+        perSystem = { pkgs, ... }: {
+          checks =
+            let
+              inherit (local.config.flake.lib) evalComponent;
+              inherit (evalComponent { inherit (module) inputs; } nixology.schemas.debug) config;
+            in
+            {
+              nixology-schemas-debug = pkgs.runCommandLocal "checks" {
+                check_flake_exportedSchemas_allSystems = builtins.seq config.flake.exportedSchemas.allSystems "ok";
+                check_flake_exportedSchemas_currentSystem = builtins.seq config.flake.exportedSchemas.currentSystem "ok";
+                check_flake_exportedSchemas_debug = builtins.seq config.flake.exportedSchemas.debug "ok";
+              } "touch $out";
+            };
+
+        };
       };
     };
-
-  check =
-    module@{ ... }:
-    {
-      perSystem = local.config.flake.lib.mkComponentCheck {
-        name = "nixology-schemas-debug";
-        component = nixology.schemas.debug;
-        inherit extraChecks;
-        inherit (module) config;
-      };
-    };
-
-  extraChecks = (
-    { eval, ... }:
-    [
-      eval.config.flake.exportedSchemas.allSystems
-      eval.config.flake.exportedSchemas.currentSystem
-      eval.config.flake.exportedSchemas.debug
-    ]
-  );
 in
 {
   imports = [
-    check
     implementation
   ];
 

@@ -2,43 +2,44 @@ local@{ ... }:
 let
   inherit (local.inputs.self.components) nixology;
 
-  inherit (local.lib)
-    mkOption
-    ;
-
-  inherit (local.lib.types)
-    lazyAttrsOf
-    anything
-    ;
-
-  inherit (local.config.partitions.schemas.extraInputs) flake-schemas;
-
-  implementation = {
-    options.flake.exportedSchemas = mkOption {
-      type = lazyAttrsOf (lazyAttrsOf anything);
-      default = { };
-      description = "Schemas for other flakes to use.";
-    };
-
-    config.flake.schemas = {
-      inherit (flake-schemas.exportedSchemas) exportedSchemas;
-    };
-  };
-
-  check =
-    module@{ ... }:
+  implementation =
+    let
+      inherit (local.lib) mkOption;
+      inherit (local.lib.types) lazyAttrsOf anything;
+      inherit (local.config.partitions.schemas.extraInputs) flake-schemas;
+    in
+    { ... }@module:
     {
-      perSystem = local.config.flake.lib.mkComponentCheck {
-        name = "nixology-core-exportedSchemas";
-        component = nixology.core.exportedSchemas;
-        extraChecks = ({ eval, ... }: [ eval.config.flake.schemas.exportedSchemas ]);
-        inherit (module) config;
+      options = {
+        flake.exportedSchemas = mkOption {
+          type = lazyAttrsOf (lazyAttrsOf anything);
+          default = { };
+          description = "Schemas for other flakes to use.";
+        };
+      };
+
+      config = {
+        flake.schemas = {
+          inherit (flake-schemas.exportedSchemas) exportedSchemas;
+        };
+
+        perSystem = { pkgs, ... }: {
+          checks =
+            let
+              inherit (local.config.flake.lib) evalComponent;
+              inherit (evalComponent { inherit (module) inputs; } nixology.core.exportedSchemas) config;
+            in
+            {
+              nixology-core-exportedSchemas = pkgs.runCommandLocal "checks" {
+                check_flake_schemas_exportedSchemas = builtins.seq config.flake.schemas.exportedSchemas "ok";
+              } "touch $out";
+            };
+        };
       };
     };
 in
 {
   imports = [
-    check
     implementation
   ];
 
@@ -47,6 +48,7 @@ in
       inherit implementation;
 
       dependencies = [
+        nixology.core.perSystem
         nixology.core.schemas
       ];
 

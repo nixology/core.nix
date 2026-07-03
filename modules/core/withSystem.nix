@@ -1,45 +1,42 @@
-local@{ ... }:
+{ ... }@local:
 let
   inherit (local.inputs.self.components) nixology;
 
-  implementation = {
-    imports = [
-      "${local.inputs.flake-parts}/modules/withSystem.nix"
-    ];
-  };
-
-  check =
-    module@{ ... }:
+  implementation =
+    { ... }@module:
     {
-      perSystem = local.config.flake.lib.mkComponentCheck {
-        name = "nixology-core-withSystem";
-        component = nixology.core.withSystem;
-        inherit extraChecks;
-        inherit (module) config;
-      };
-    };
+      imports = [
+        "${local.inputs.flake-parts}/modules/withSystem.nix"
+      ];
 
-  extraChecks = (
-    { evalComponent, component, ... }:
-    let
-      evalWithDebug = evalComponent {
-        module = {
-          imports = [
-            local.inputs.self.components.nixology.core.debug.module
-            { debug = true; }
-            component.module
-          ];
+      config = {
+        perSystem = { pkgs, ... }: {
+          checks =
+            let
+              inherit (local.config.flake.lib) evalComponent;
+              inherit
+                (evalComponent { inherit (module) inputs; } {
+                  module = {
+                    imports = [
+                      nixology.core.debug.module
+                      nixology.core.withSystem.module
+                    ];
+                  };
+                })
+                _module
+                ;
+            in
+            {
+              nixology-core-withSystem = pkgs.runCommandLocal "checks" {
+                check_module_args_withSystem = builtins.seq _module.args.withSystem "ok";
+              } "touch $out";
+            };
         };
       };
-    in
-    [
-      evalWithDebug._module.args.withSystem
-    ]
-  );
+    };
 in
 {
   imports = [
-    check
     implementation
   ];
 

@@ -1,5 +1,7 @@
-local@{ ... }:
+{ ... }@local:
 let
+  inherit (local.inputs.self.components) nixology;
+
   extraInputs = local.config.partitions.systems.extraInputs;
 
   variants = [
@@ -25,6 +27,10 @@ let
     in
     {
       inherit implementation;
+
+      dependencies = [
+        nixology.core.perSystem
+      ];
 
       meta = {
         description = "Configure the flake systems list using the `${variant}` systems input.";

@@ -1,25 +1,30 @@
-local@{ ... }:
+{ ... }@local:
 let
   inherit (local.inputs.self.components) nixology;
 
-  implementation = {
-    pkgs.settings.allowUnfree = true;
-  };
-
-  check =
-    module@{ ... }:
+  implementation =
+    { ... }@module:
     {
-      perSystem = local.config.flake.lib.mkComponentCheck {
-        name = "nixology-core-pkgsUnfree";
-        component = nixology.core.pkgsUnfree;
-        extraChecks = ({ eval, ... }: [ eval.config.pkgs.settings.allowUnfree ]);
-        inherit (module) config;
-      };
+      pkgs.settings.allowUnfree = true;
+
+      perSystem =
+        { pkgs, ... }:
+        {
+          checks =
+            let
+              inherit (local.config.flake.lib) evalComponent;
+              inherit (evalComponent { inherit (module) inputs; } nixology.core.pkgsUnfree) config;
+            in
+            {
+              nixology-core-pkgsUnfree = pkgs.runCommandLocal "checks" {
+                check_pkgs_settings_allowUnfree =
+                  if (config.pkgs.settings.allowUnfree == true) then "ok" else abort;
+              } "touch $out";
+            };
+        };
     };
 in
 {
-  imports = [ check ];
-
   flake.components = {
     nixology.core.pkgsUnfree = {
       inherit implementation;

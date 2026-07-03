@@ -1,44 +1,50 @@
-local@{ ... }:
+{ ... }@local:
 let
   inherit (local.inputs.self.components) nixology;
 
-  inherit (local.lib)
-    mkOption
-    ;
-
-  inherit (local.lib.types)
-    nullOr
-    str
-    ;
-
-  implementation = {
-    options.flakeref = mkOption {
-      type = nullOr str;
-      default = null;
-      description = "The flake reference for this flake.";
-    };
-  };
-
-  check =
-    module@{ ... }:
+  implementation =
+    { ... }@module:
+    let
+      inherit (local.lib) mkOption;
+      inherit (local.lib.types) nullOr str;
+    in
     {
-      perSystem = local.config.flake.lib.mkComponentCheck {
-        name = "nixology-core-flakeref";
-        component = nixology.core.flakeref;
-        extraChecks = ({ eval, ... }: [ eval.config.flakeref ]);
-        inherit (module) config;
+      options = {
+        flakeref = mkOption {
+          type = nullOr str;
+          default = null;
+          description = "The flake reference for this flake.";
+        };
+      };
+
+      config = {
+        perSystem = { pkgs, ... }: {
+          checks =
+            let
+              inherit (local.config.flake.lib) evalComponent;
+              inherit (evalComponent { inherit (module) inputs; } nixology.core.flakeref) config;
+            in
+            {
+              nixology-core-flakeref = pkgs.runCommandLocal "checks" {
+                check_flakeref = builtins.seq config.flakeref "ok";
+              } "touch $out";
+            };
+        };
       };
     };
 in
 {
   imports = [
-    check
     implementation
   ];
 
   flake.components = {
     nixology.core.flakeref = {
       inherit implementation;
+
+      dependencies = [
+        nixology.core.perSystem
+      ];
 
       meta = {
         description = "Provide a unique identifier for the flake.";

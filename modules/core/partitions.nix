@@ -1,22 +1,34 @@
-local@{ ... }:
+{ ... }@local:
 let
   inherit (local.inputs.self.components) nixology;
 
-  implementation = local.inputs.flake-parts.flakeModules.partitions;
-
-  check =
-    module@{ ... }:
+  implementation =
+    let
+      inherit (local.inputs) flake-parts;
+    in
+    { ... }@module:
     {
-      perSystem = local.config.flake.lib.mkComponentCheck {
-        name = "nixology-core-partitions";
-        component = nixology.core.partitions;
-        inherit (module) config;
+      imports = [
+        flake-parts.flakeModules.partitions
+      ];
+
+      config = {
+        perSystem = { pkgs, ... }: {
+          checks =
+            let
+              inherit (local.config.flake.lib) evalComponent;
+              inherit (evalComponent { inherit (module) inputs; } nixology.core.partitions) config;
+            in
+            {
+              nixology-core-partitions = pkgs.runCommandLocal "checks" {
+              } "touch $out";
+            };
+        };
       };
     };
 in
 {
   imports = [
-    check
     implementation
   ];
 

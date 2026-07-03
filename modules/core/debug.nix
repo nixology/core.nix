@@ -1,54 +1,40 @@
-local@{ ... }:
+{ ... }@local:
 let
   inherit (local.inputs.self.components) nixology;
 
-  inherit (local.lib)
-    mkDefault
-    ;
-
-  implementation = {
-    imports = [
-      "${local.inputs.flake-parts}/modules/debug.nix"
-    ];
-
-    config = {
-      debug = mkDefault true;
-      flake.schemas = { inherit (local.config.flake.exportedSchemas) allSystems currentSystem debug; };
-    };
-  };
-
-  check =
-    module@{ ... }:
-    {
-      perSystem = local.config.flake.lib.mkComponentCheck {
-        name = "nixology-core-debug";
-        component = nixology.core.debug;
-        inherit extraChecks;
-        inherit (module) config;
-      };
-    };
-
-  extraChecks = (
-    { evalComponent, component, ... }:
+  implementation =
     let
-      evalEnabled = evalComponent {
-        module = {
-          imports = [
-            component.module
-          ];
+      inherit (local.lib) mkDefault;
+    in
+    { ... }@module:
+    {
+      imports = [
+        "${local.inputs.flake-parts}/modules/debug.nix"
+      ];
+
+      config = {
+        debug = mkDefault true;
+
+        flake.schemas = { inherit (local.config.flake.exportedSchemas) allSystems currentSystem debug; };
+
+        perSystem = { pkgs, ... }: {
+          checks =
+            let
+              inherit (local.config.flake.lib) evalComponent;
+              inherit (evalComponent { inherit (module) inputs; } nixology.core.debug) config;
+            in
+            {
+              nixology-core-debug = pkgs.runCommandLocal "checks" {
+                check_allSystems = builtins.seq config.allSystems "ok";
+                check_debug = builtins.seq config.debug "ok";
+              } "touch $out";
+            };
         };
       };
-    in
-    [
-      evalEnabled.config
-      evalEnabled.config.allSystems
-      evalEnabled.config.debug
-    ]
-  );
+    };
 in
 {
   imports = [
-    check
     implementation
   ];
 

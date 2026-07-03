@@ -1,51 +1,52 @@
-local@{ ... }:
+{ ... }@local:
 let
   inherit (local.inputs.self.components) nixology;
 
-  implementation = {
-    imports = [
-      "${local.inputs.flake-parts}/modules/moduleWithSystem.nix"
-    ];
-  };
-
-  check =
-    module@{ ... }:
+  implementation =
+    { ... }@module:
     {
-      perSystem = local.config.flake.lib.mkComponentCheck {
-        name = "nixology-core-moduleWithSystem";
-        component = nixology.core.moduleWithSystem;
-        inherit extraChecks;
-        inherit (module) config;
-      };
-    };
+      imports = [
+        "${local.inputs.flake-parts}/modules/moduleWithSystem.nix"
+      ];
 
-  extraChecks = (
-    { evalComponent, component, ... }:
-    let
-      evalWithDebug = evalComponent {
-        module = {
-          imports = [
-            local.inputs.self.components.nixology.core.debug.module
-            { debug = true; }
-            component.module
-          ];
+      config = {
+        perSystem = { pkgs, ... }: {
+          checks =
+            let
+              inherit (local.config.flake.lib) evalComponent;
+              inherit
+                (evalComponent { inherit (module) inputs; } {
+                  module = {
+                    imports = [
+                      nixology.core.debug.module
+                      nixology.core.moduleWithSystem.module
+                    ];
+                  };
+                })
+                _module
+                ;
+            in
+            {
+              nixology-core-moduleWithSystem = pkgs.runCommandLocal "checks" {
+                check_module_args_moduleWithSystem = builtins.seq _module.args.moduleWithSystem "ok";
+              } "touch $out";
+            };
         };
       };
-    in
-    [
-      evalWithDebug._module.args.moduleWithSystem
-    ]
-  );
+    };
 in
 {
   imports = [
-    check
     implementation
   ];
 
   flake.components = {
     nixology.core.moduleWithSystem = {
       inherit implementation;
+
+      dependencies = [
+        nixology.core.perSystem
+      ];
 
       meta = {
         description = "Expose the upstream flake-parts moduleWithSystem module as a nixology component.";

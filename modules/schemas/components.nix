@@ -1,4 +1,4 @@
-local@{ ... }:
+{ ... }@local:
 let
   inherit (local.inputs.self.components) nixology;
 
@@ -11,54 +11,57 @@ let
 
   inherit (flake-schemas.lib) mkChildren;
 
-  implementation = {
-    config = {
-      flake.exportedSchemas = {
-        components = {
-          version = 1;
-
-          doc = "The `components` flake output provides importable components.";
-
-          inventory =
-            let
-              recurse =
-                components:
-                mkChildren (
-                  mapAttrs (
-                    name: value:
-                    if isAttrs value && value ? module then
-                      {
-                        what =
-                          if value.meta.shortDescription != null then
-                            "component (${value.meta.shortDescription})"
-                          else
-                            "component attribute";
-                      }
-                    else
-                      recurse value
-                  ) components
-                );
-            in
-            recurse;
-        };
-      };
-    };
-  };
-
-  check =
-    module@{ ... }:
+  implementation =
+    { ... }@module:
     {
-      perSystem = local.config.flake.lib.mkComponentCheck {
-        name = "nixology-schemas-components";
-        component = nixology.schemas.components;
-        extraChecks = ({ eval, ... }: [ eval.config.flake.exportedSchemas.components ]);
-        inherit (module) config;
+      config = {
+        flake.exportedSchemas = {
+          components = {
+            version = 1;
+
+            doc = "The `components` flake output provides importable components.";
+
+            inventory =
+              let
+                recurse =
+                  components:
+                  mkChildren (
+                    mapAttrs (
+                      name: value:
+                      if isAttrs value && value ? module then
+                        {
+                          what =
+                            if value.meta.shortDescription != null then
+                              "component (${value.meta.shortDescription})"
+                            else
+                              "component attribute";
+                        }
+                      else
+                        recurse value
+                    ) components
+                  );
+              in
+              recurse;
+          };
+        };
+
+        perSystem = { pkgs, ... }: {
+          checks =
+            let
+              inherit (local.config.flake.lib) evalComponent;
+              inherit (evalComponent { inherit (module) inputs; } nixology.schemas.components) config;
+            in
+            {
+              nixology-schemas-components = pkgs.runCommandLocal "checks" {
+                check_flake_exportedSchemas_components = builtins.seq config.flake.exportedSchemas.components "ok";
+              } "touch $out";
+            };
+        };
       };
     };
 in
 {
   imports = [
-    check
     implementation
   ];
 

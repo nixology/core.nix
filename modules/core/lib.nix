@@ -1,8 +1,8 @@
-local@{
+{
   config ? null,
   lib ? local.inputs.flake-parts.inputs.nixpkgs-lib.lib,
   ...
-}:
+}@local:
 let
   inherit (local.inputs.self.components) nixology;
 
@@ -52,9 +52,14 @@ let
         in
         if stem == null then baseName else builtins.head stem;
 
-      uses = { components ? [ ], ... }: {
-        imports = map (component: component.module) components;
-      };
+      uses =
+        {
+          components ? [ ],
+          ...
+        }:
+        {
+          imports = map (component: component.module) components;
+        };
 
       modulesIn =
         directory:
@@ -65,9 +70,11 @@ let
 
       evalComponent = args: component: evalFlakeModule args component.module;
 
-      mkFlake = args: module: flake-parts-lib.mkFlake args {
-        imports = [ module ] ++ optionals (config != null) [ nixology.core.default.module ];
-      };
+      mkFlake =
+        args: module:
+        flake-parts-lib.mkFlake args {
+          imports = [ module ] ++ optionals (config != null) [ nixology.core.default.module ];
+        };
 
       mkTOMLFlake =
         flakeArgs: tomlFile:
@@ -87,7 +94,8 @@ let
         in
         mkFlake args module;
 
-      metadataForFlakeInput = flake: input:
+      metadataForFlakeInput =
+        flake: input:
         let
           lock = builtins.fromJSON (builtins.readFile "${flake.outPath}/flake.lock");
 
@@ -126,36 +134,12 @@ let
           url = url input;
           version = version input;
         };
-
-      mkComponentCheck =
-        {
-          name,
-          component,
-          extraChecks ? _: [ ],
-          config,
-        }:
-        { pkgs, ... }:
-        let
-          evalFn = c: evalComponent { inherit (local) inputs; } c;
-          eval = evalFn component;
-          extra = extraChecks {
-            evalComponent = evalFn;
-            inherit eval component;
-          };
-          seqLine = v: ": ${builtins.seq v "ok"}";
-        in
-        {
-          checks.${name} = pkgs.runCommandLocal "${name}-check" { } (
-            concatLines ([ (seqLine eval.config) ] ++ map seqLine extra ++ [ "touch $out" ])
-          );
-        };
     in
     {
       inherit
         getFileStem
         evalComponent
         metadataForFlakeInput
-        mkComponentCheck
         mkFlake
         mkTOMLFlake
         modulesIn
@@ -163,7 +147,6 @@ let
       components = {
         inherit
           evalComponent
-          mkComponentCheck
           uses
           ;
       };
@@ -185,37 +168,36 @@ let
       };
     };
 
-  implementation = {
-    flake.lib = mkDefault (makeExtensible (final: library));
-    flake.schemas = { inherit (local.config.flake.exportedSchemas) lib; };
-
-    touchup = {
-      # hide attributes added to lib when using makeExtensible
-      attr.lib.attr.__unfix__.enable = false;
-    };
-  };
-
-  check =
-    { config, ... }:
+  implementation =
+    { ... }@module:
     {
-      perSystem = config.flake.lib.mkComponentCheck {
-        name = "nixology-core-lib";
-        component = nixology.core.lib;
-        extraChecks = (
-          { eval, ... }:
-          [
-            eval.config.flake.lib.mkFlake
-            eval.config.flake.lib.metadataForFlakeInput
-            (eval.config.flake.lib.metadataForFlakeInput local.inputs.self local.inputs.flake-parts)
-          ]
-        );
-        inherit config;
+      flake.lib = mkDefault (makeExtensible (final: library));
+      flake.schemas = { inherit (local.config.flake.exportedSchemas) lib; };
+
+      perSystem = { pkgs, ... }: {
+        checks =
+          let
+            inherit (local.config.flake.lib) evalComponent;
+            inherit (evalComponent { inherit (module) inputs; } nixology.core.lib) config;
+          in
+          {
+            nixology-core-lib = pkgs.runCommandLocal "checks" {
+              check_flake_lib_mkFlake = builtins.seq config.flake.lib.mkFlake "ok";
+              check_flake_lib_metadataForFlakeInput = builtins.seq config.flake.lib.metadataForFlakeInput "ok";
+              check_flake_lib_metadataForFlakeInput_self_flake-parts =
+                (config.flake.lib.metadataForFlakeInput local.inputs.self local.inputs.flake-parts).pname;
+            } "touch $out";
+          };
+      };
+
+      touchup = {
+        # hide attributes added to lib when using makeExtensible
+        attr.lib.attr.__unfix__.enable = false;
       };
     };
 in
 {
   imports = [
-    check
     implementation
   ];
 
@@ -229,6 +211,7 @@ in
       inherit implementation;
 
       dependencies = [
+        nixology.core.perSystem
         nixology.core.schemas
         nixology.extra.touchup
       ];
