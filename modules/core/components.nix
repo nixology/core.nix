@@ -147,17 +147,33 @@ let
 
       componentsFrom =
         attrs:
-        builtins.concatLists (
-          builtins.attrValues (
-            builtins.mapAttrs (
-              _: value:
-              if builtins.isAttrs value then
-                (if isComponent value then [ value ] else componentsFrom value)
-              else
-                [ ]
-            ) attrs
-          )
-        );
+        let
+          go =
+            path: attrs:
+            builtins.concatLists (
+              builtins.attrValues (
+                builtins.mapAttrs (
+                  name: value:
+                  let
+                    newPath = path ++ [ name ];
+                  in
+                  if builtins.isAttrs value then
+                    if isComponent value then
+                      [
+                        {
+                          name = builtins.concatStringsSep "." newPath;
+                          value = value;
+                        }
+                      ]
+                    else
+                      go newPath value
+                  else
+                    [ ]
+                ) attrs
+              )
+            );
+        in
+        go [ ] attrs;
     in
     {
       options = {
@@ -176,18 +192,12 @@ let
             let
               inherit (local.config.flake.lib) evalComponent;
 
-              configs =
-                let
-                  componentsConfigs = map (component: (evalComponent { inherit (module) inputs; } component).config) (
-                    componentsFrom module.config.flake.components
-                  );
-                in
-                builtins.listToAttrs (
-                  builtins.genList (i: {
-                    name = "item-${toString i}";
-                    value = builtins.elemAt componentsConfigs i;
-                  }) (builtins.length componentsConfigs)
-                );
+              configs = builtins.listToAttrs (
+                map ({ name, value }: {
+                  inherit name;
+                  value = (evalComponent { inherit (module) inputs; } value).config;
+                }) (componentsFrom module.config.flake.components)
+              );
 
               inherit (evalComponent { inherit (module) inputs; } nixology.core.components) config;
             in
