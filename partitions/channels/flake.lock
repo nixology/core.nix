@@ -82,11 +82,11 @@
     },
     "channel_6": {
       "locked": {
-        "lastModified": 1788834054,
-        "narHash": "sha256-9dzTcXMtlknZyT47Vv1PnpGgN7UYA8WxxqyxsKdvYbo=",
+        "lastModified": 1789370336,
+        "narHash": "sha256-6RSEDHIWQtesQKWSu5qRai8L2h4KgCgMEfJHstW99G4=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "e9b9cbecbf6c25ca26c150d78570e6332694a129",
+        "rev": "c7def046b9a883d46974757852106483d741586f",
         "type": "github"
       },
       "original": {
@@ -202,11 +202,11 @@
       },
       "locked": {
         "dir": "nixpkgs-unstable",
-        "lastModified": 1789140478,
-        "narHash": "sha256-CrntD9+jld9GgAEKLuSSzlj2zvEDV2sMVqlQmB7cjtA=",
+        "lastModified": 1789745160,
+        "narHash": "sha256-tMNTOWYWJ4j7O0a9nirE6ZKGNrP1Ucz5g8UyLkMJfuU=",
         "owner": "nixology",
         "repo": "channels.nix",
-        "rev": "c1a73218a9712fbc61e2a6755bc6e5e1e4c02044",
+        "rev": "a99af5928379784002e03b1c1a8e2181d471c0a2",
         "type": "github"
       },
       "original": {
